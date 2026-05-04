@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,13 +27,11 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("")
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<List<UserResponse>> getUsers(
             @RequestParam(required = false, defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "10") int limit
     ) {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        log.info(authentication.toString());
-
         PageRequest pageRequest = PageRequest.of(page - 1, limit);
         Page<UserResponse> result =  userService.getUsers(pageRequest);
 
@@ -52,9 +52,16 @@ public class UserController {
         return response;
     }
 
-    @GetMapping("/{userId}")
-    User getUser(@PathVariable("userId") String userId) {
-        return userService.getUser(userId);
+    @GetMapping("/me")
+    ApiResponse<UserResponse> getUser() {
+        var context = SecurityContextHolder.getContext().getAuthentication();
+        String email = context.getName();
+
+        ApiResponse<UserResponse> response = new ApiResponse<>();
+        UserResponse userResponse = userService.getMyInfo(email);
+
+        response.setData(userResponse);
+        return response;
     }
 
     @PatchMapping("/{userId}")

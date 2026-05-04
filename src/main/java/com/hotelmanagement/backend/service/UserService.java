@@ -12,6 +12,7 @@ import com.hotelmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -31,10 +33,11 @@ public class UserService {
     @Autowired
     UserMapper userMapper;
 
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     public UserResponse createUser(UserCreationRequest request) {
-
+        log.info("User creation request : {}", request);
         if (userRepository.existsByEmail(request.getEmail())){
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         };
@@ -54,13 +57,14 @@ public class UserService {
                 .map(userMapper::toUserResponse);
     }
 
-    public User getUser(String userId) {
-        return userRepository.findById(userId)
+    public UserResponse getMyInfo(String email) {
+        return userRepository.findByEmail(email).map(userMapper::toUserResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
     public UserResponse updateUser(String userId,  UserUpdateRequest request) {
-        User user = getUser(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         userMapper.updateUser(user, request);
 
         return userMapper.toUserResponse(userRepository.save(user));
