@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,9 @@ public class UserController {
             @RequestParam(required = false, defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "10") int limit
     ) {
+        SecurityContext context = SecurityContextHolder.getContext();
+
+
         PageRequest pageRequest = PageRequest.of(page - 1, limit);
         Page<UserResponse> result =  userService.getUsers(pageRequest);
 
@@ -44,29 +48,33 @@ public class UserController {
                 .hasPrev(result.hasPrevious())
                 .build();
 
-        ApiResponse<List<UserResponse>> response = new ApiResponse<>();
-
-        response.setData(result.getContent());
-        response.setPagination(meta);
-
-        return response;
+        return ApiResponse.<List<UserResponse>>builder()
+                .data(result.getContent())
+                .pagination(meta)
+                .build();
     }
 
     @GetMapping("/me")
     ApiResponse<UserResponse> getUser() {
         var context = SecurityContextHolder.getContext().getAuthentication();
-        String email = context.getName();
+        String userId = context.getName();
 
         ApiResponse<UserResponse> response = new ApiResponse<>();
-        UserResponse userResponse = userService.getMyInfo(email);
+        UserResponse userResponse = userService.getMyInfo(userId);
 
         response.setData(userResponse);
         return response;
     }
 
-    @PatchMapping("/{userId}")
-    UserResponse updateUser(@PathVariable("userId") String userId, @RequestBody UserUpdateRequest request){
-        return userService.updateUser(userId, request);
+    @PatchMapping("")
+    ApiResponse<UserResponse> updateUser(@RequestBody UserUpdateRequest request){
+        var context = SecurityContextHolder.getContext().getAuthentication();
+        String userId = context.getName();
+
+        UserResponse user =  userService.updateUser(userId, request);
+        return ApiResponse.<UserResponse>builder()
+                .data(user)
+                .build();
     }
 
     @DeleteMapping("/{userId}")

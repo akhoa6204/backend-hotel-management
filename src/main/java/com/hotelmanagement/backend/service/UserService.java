@@ -3,11 +3,12 @@ package com.hotelmanagement.backend.service;
 import com.hotelmanagement.backend.dto.request.UserCreationRequest;
 import com.hotelmanagement.backend.dto.request.UserUpdateRequest;
 import com.hotelmanagement.backend.dto.response.UserResponse;
+import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
-import com.hotelmanagement.backend.enums.Role;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.enums.ErrorCode;
 import com.hotelmanagement.backend.mapper.UserMapper;
+import com.hotelmanagement.backend.repository.RoleRepository;
 import com.hotelmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -19,21 +20,20 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.HashSet;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserService {
-    @Autowired
     UserRepository userRepository;
-
-    @Autowired
     UserMapper userMapper;
 
-    @Autowired
+    RoleRepository roleRepository;
+
     PasswordEncoder passwordEncoder;
 
     public UserResponse createUser(UserCreationRequest request) {
@@ -44,8 +44,12 @@ public class UserService {
 
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        HashSet<String> roles = new HashSet<>();
-        roles.add(Role.USER.name());
+        HashSet<Role> roles = new HashSet<>();
+
+        Role role = roleRepository.findById(com.hotelmanagement.backend.enums.Role.USER.name())
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+
+        roles.add(role);
 
         user.setRoles(roles);
         return userMapper.toUserResponse(userRepository.save(user));
@@ -57,15 +61,23 @@ public class UserService {
                 .map(userMapper::toUserResponse);
     }
 
-    public UserResponse getMyInfo(String email) {
-        return userRepository.findByEmail(email).map(userMapper::toUserResponse)
+    public UserResponse getMyInfo(String userId) {
+        return userRepository.findById(userId).map(userMapper::toUserResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
-    public UserResponse updateUser(String userId,  UserUpdateRequest request) {
+    public UserResponse updateUser(String userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         userMapper.updateUser(user, request);
+        if(request.getPassword()!=null){
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        if(!CollectionUtils.isEmpty(request.getRoles())) {
+            var roles = roleRepository.findAllById(request.getRoles());
+            user.setRoles(new HashSet<>(roles));
+        }
+
 
         return userMapper.toUserResponse(userRepository.save(user));
     }

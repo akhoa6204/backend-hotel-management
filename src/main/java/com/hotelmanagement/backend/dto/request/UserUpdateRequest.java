@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Data
@@ -15,17 +17,16 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserUpdateRequest {
-    @NotBlank(message = "FULLNAME_REQUIRED")
     String fullName;
 
-    @NotBlank(message = "EMAIL_REQUIRED")
     @Email(message = "EMAIL_INVALID")
     String email;
 
     @Size(min = 8, message = "PASSWORD_TOO_SHORT")
     String password;
 
-    @NotBlank(message = "PHONE_REQUIRED")
     @Pattern(regexp = "^[0-9]{10}$", message = "PHONE_INVALID")
     String phone;
+
+    List<String> roles;
 }

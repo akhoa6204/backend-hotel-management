@@ -1,11 +1,13 @@
 package com.hotelmanagement.backend.config;
 
+import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
-import com.hotelmanagement.backend.enums.Role;
+import com.hotelmanagement.backend.repository.RoleRepository;
 import com.hotelmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -18,23 +20,39 @@ import java.util.HashSet;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class ApplicationInitConfig {
 
-    final PasswordEncoder passwordEncoder;
+    PasswordEncoder passwordEncoder;
+
+    @NonFinal
+    static final String ADMIN_EMAIL = "admin@diamondsea.hotel.com";
+
+    @NonFinal
+    static final String ADMIN_PASSWORD = "admin";
 
     @Bean
-    ApplicationRunner applicationRunner(UserRepository userRepository) {
+    ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository) {
         return args -> {
-            if(userRepository.findByEmail("admin@diamondsea.hotel.com").isEmpty()){
-                var roles = new HashSet<String>();
-                roles.add(Role.ADMIN.name());
+            if(userRepository.findByEmail(ADMIN_EMAIL).isEmpty()){
+                roleRepository.save(Role.builder()
+                        .name(com.hotelmanagement.backend.enums.Role.USER.name())
+                        .description("User role")
+                        .build());
+
+                Role adminRole = roleRepository.save(Role.builder()
+                        .name(com.hotelmanagement.backend.enums.Role.ADMIN.name())
+                        .description("Admin role")
+                        .build());
+
+                var roles = new HashSet<Role>();
+                roles.add(adminRole);
 
                 User user = User.builder()
                         .fullName("admin")
-                        .email("admin@diamondsea.hotel.com")
+                        .email(ADMIN_EMAIL)
                         .roles(roles)
-                        .password(passwordEncoder.encode("admin"))
+                        .password(passwordEncoder.encode(ADMIN_PASSWORD))
                         .build();
 
                 userRepository.save(user);

@@ -62,7 +62,7 @@ public class AuthenticationService {
         try {
             JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
             JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                    .subject(user.getEmail())
+                    .subject(user.getId())
                     .issuer("khoaanh662004")
                     .issueTime(new Date())
                     .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()))
@@ -102,7 +102,12 @@ public class AuthenticationService {
     String buildScope(User user) {
         StringJoiner scope = new StringJoiner(" ");
         if (!CollectionUtils.isEmpty(user.getRoles())) {
-            user.getRoles().forEach(scope::add);
+            user.getRoles().forEach(role -> {
+                scope.add("ROLE_" + role.getName());
+                if(!CollectionUtils.isEmpty(role.getPermissions())){
+                    role.getPermissions().forEach(permission -> scope.add(permission.getName()));
+                }
+            });
         }
         return scope.toString();
     }

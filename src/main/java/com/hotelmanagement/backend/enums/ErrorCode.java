@@ -21,6 +21,9 @@ public enum ErrorCode {
 
     USER_NOT_FOUND(2002, "User not found", HttpStatus.NOT_FOUND),
 
+    PERMISSION_NOT_FOUND(2003, "Permission not found", HttpStatus.NOT_FOUND),
+    ROLE_NOT_FOUND(2003, "Role not found", HttpStatus.NOT_FOUND),
+
     UNAUTHENTICATED(1002, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN);
 

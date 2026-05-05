@@ -14,15 +14,11 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Role {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-    String fullName;
-    String email;
-    String phone;
-    String password;
+    String name;
+    String description;
 
     @ManyToMany
-    Set<Role> roles;
+    Set<Permisson> permissions;
 }
