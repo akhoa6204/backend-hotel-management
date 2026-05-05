@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
 import java.util.Set;
 
 @Getter
@@ -21,5 +22,6 @@ public class UserResponse {
     String fullName;
     String email;
     String phone;
+    LocalDate dob;
     Set<RoleResponse> roles;
 }

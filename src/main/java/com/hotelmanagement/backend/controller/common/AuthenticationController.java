@@ -9,6 +9,7 @@ import com.hotelmanagement.backend.dto.response.IntrospectResponse;
 import com.hotelmanagement.backend.dto.response.UserResponse;
 import com.hotelmanagement.backend.service.AuthenticationService;
 import com.hotelmanagement.backend.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,7 +39,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    ApiResponse<UserResponse> register(@RequestBody UserCreationRequest request) {
+    ApiResponse<UserResponse> register(@RequestBody @Valid UserCreationRequest request) {
         ApiResponse<UserResponse> response = new ApiResponse<>();
 
         UserResponse userResponse = userService.createUser(request);

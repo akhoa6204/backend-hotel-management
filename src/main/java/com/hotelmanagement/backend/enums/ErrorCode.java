@@ -14,7 +14,7 @@ public enum ErrorCode {
     EMAIL_INVALID(1202, "Invalid email format", HttpStatus.BAD_REQUEST),
     EMAIL_ALREADY_EXISTS(1203, "Email already exists", HttpStatus.CONFLICT),
 
-    PASSWORD_TOO_SHORT(1301, "Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
+    PASSWORD_TOO_SHORT(1301, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
 
     PHONE_REQUIRED(1401, "Phone is required", HttpStatus.BAD_REQUEST),
     PHONE_INVALID(1402, "Phone must be 10 digits", HttpStatus.BAD_REQUEST),
@@ -23,10 +23,10 @@ public enum ErrorCode {
 
     PERMISSION_NOT_FOUND(2003, "Permission not found", HttpStatus.NOT_FOUND),
     ROLE_NOT_FOUND(2003, "Role not found", HttpStatus.NOT_FOUND),
+    INVALID_DOB(1501, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
 
     UNAUTHENTICATED(1002, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN);
-
     private final int code;
     private final String message;
     private final HttpStatus httpStatus;

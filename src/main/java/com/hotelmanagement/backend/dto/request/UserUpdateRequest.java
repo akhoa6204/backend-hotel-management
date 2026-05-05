@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -27,6 +28,8 @@ public class UserUpdateRequest {
 
     @Pattern(regexp = "^[0-9]{10}$", message = "PHONE_INVALID")
     String phone;
+
+    LocalDate dob;
 
     List<String> roles;
 }
