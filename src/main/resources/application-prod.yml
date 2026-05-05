@@ -27,8 +27,9 @@ spring:
             enable: true
 
 jwt:
-  signerKey: ${JWT_SECRET}
-
+  signer-key: ${JWT_SECRET}
+  valid-duration:
+  refreshable-duration:
 app:
   cors:
     origin: ${CORS_ORIGIN}

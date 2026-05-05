@@ -26,9 +26,10 @@ public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {"/auth/**"};
 
 
-    @Value("${jwt.signerKey}")
+    @Value("${jwt.signer-key}")
     private String SIGNER_KEY;
 
+    private CustomJwtDecoder customJwtDecoder;
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -40,7 +41,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwtConfigurer ->
                                 jwtConfigurer
-                                        .decoder(jwtDecoder())
+                                        .decoder(customJwtDecoder)
                                         .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
 
@@ -58,14 +59,6 @@ public class SecurityConfig {
         return jwtAuthenticationConverter;
     }
 
-    @Bean
-    JwtDecoder jwtDecoder() {
-        SecretKeySpec secretKey = new SecretKeySpec(SIGNER_KEY.getBytes(), "HmacSHA256");
-        return NimbusJwtDecoder
-                .withSecretKey(secretKey)
-                .macAlgorithm(MacAlgorithm.HS256)
-                .build();
-    }
 
     @Bean
     PasswordEncoder passwordEncoder() {

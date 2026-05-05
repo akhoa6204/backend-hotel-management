@@ -59,11 +59,9 @@ public class UserController {
         var context = SecurityContextHolder.getContext().getAuthentication();
         String userId = context.getName();
 
-        ApiResponse<UserResponse> response = new ApiResponse<>();
         UserResponse userResponse = userService.getMyInfo(userId);
 
-        response.setData(userResponse);
-        return response;
+        return ApiResponse.<UserResponse>builder().data(userResponse).build();
     }
 
     @PatchMapping("")

@@ -1,14 +1,13 @@
 package com.hotelmanagement.backend.controller.common;
 
-import com.hotelmanagement.backend.dto.request.AuthenticationRequest;
-import com.hotelmanagement.backend.dto.request.IntrospectRequest;
-import com.hotelmanagement.backend.dto.request.UserCreationRequest;
+import com.hotelmanagement.backend.dto.request.*;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.AuthenticationResponse;
 import com.hotelmanagement.backend.dto.response.IntrospectResponse;
 import com.hotelmanagement.backend.dto.response.UserResponse;
 import com.hotelmanagement.backend.service.AuthenticationService;
 import com.hotelmanagement.backend.service.UserService;
+import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.text.ParseException;
 
 @RestController
 @RequestMapping("/auth")
@@ -57,6 +58,24 @@ public class AuthenticationController {
                 .data(IntrospectResponse.builder()
                         .valid(result.isValid())
                         .build())
+                .build();
+    }
+
+    @PostMapping("/logout")
+    ApiResponse<String> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        authenticationService.logout(request);
+        return ApiResponse.<String>builder()
+                .message("Successfully logged out")
+                .build();
+
+    }
+
+    @PostMapping("/refresh")
+    ApiResponse<AuthenticationResponse> refresh(@RequestBody RefreshRequest request) throws ParseException, JOSEException {
+        AuthenticationResponse response = authenticationService.refreshToken(request);
+        return ApiResponse.<AuthenticationResponse>builder()
+                .data(response)
+                .message("Successfully refreshed token")
                 .build();
     }
 }
