@@ -30,6 +30,9 @@ public enum ErrorCode {
     ROOM_ALREADY_EXISTS(1701, "Room already exists", HttpStatus.CONFLICT),
     ROOM_NOT_FOUND(1702, "Room not found", HttpStatus.NOT_FOUND),
 
+    PROMOTION_ALREADY_EXISTS(1801, "Promotion already exists", HttpStatus.CONFLICT),
+    PROMOTION_NOT_FOUND(1802, "Promotion not found", HttpStatus.NOT_FOUND),
+
     SERVICE_ALREADY_EXISTS(1801, "Service already exists", HttpStatus.CONFLICT),
     SERVICE_NOT_FOUND(1802, "Service not found", HttpStatus.NOT_FOUND),
 
