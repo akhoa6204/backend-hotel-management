@@ -1,40 +1,28 @@
 package com.hotelmanagement.backend.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
 import java.util.Date;
-import java.util.Set;
 
 @Getter
 @Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Amenity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     String id;
-    String fullName;
-    String email;
-    String phone;
-    String password;
-    LocalDate dob;
+    String label;
 
     @CreationTimestamp
     Date createdAt;
     @UpdateTimestamp
-    Date updatedAt;
-
-    boolean active;
-
-    @ManyToMany
-    Set<Role> roles;
+    Date updateAt;
 }

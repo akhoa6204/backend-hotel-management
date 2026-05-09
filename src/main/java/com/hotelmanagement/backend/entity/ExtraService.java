@@ -1,40 +1,37 @@
 package com.hotelmanagement.backend.entity;
 
+import com.hotelmanagement.backend.enums.RoomStatus;
+import com.hotelmanagement.backend.enums.ServiceType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.Date;
-import java.util.Set;
 
 @Getter
 @Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class ExtraService {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-    String fullName;
-    String email;
-    String phone;
-    String password;
-    LocalDate dob;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+    String name;
+    String description;
+    BigDecimal basePrice;
+    boolean active;
+    @Enumerated(EnumType.STRING)
+    ServiceType type;
 
     @CreationTimestamp
     Date createdAt;
+
     @UpdateTimestamp
     Date updatedAt;
-
-    boolean active;
-
-    @ManyToMany
-    Set<Role> roles;
 }

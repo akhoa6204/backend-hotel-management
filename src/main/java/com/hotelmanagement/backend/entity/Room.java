@@ -1,12 +1,12 @@
 package com.hotelmanagement.backend.entity;
 
+import com.hotelmanagement.backend.enums.RoomStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.Set;
 
@@ -14,27 +14,25 @@ import java.util.Set;
 @Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class Room {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-    String fullName;
-    String email;
-    String phone;
-    String password;
-    LocalDate dob;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+    String name;
+    @Enumerated(EnumType.STRING)
+    RoomStatus status;
+    boolean active;
 
     @CreationTimestamp
     Date createdAt;
+
     @UpdateTimestamp
     Date updatedAt;
 
-    boolean active;
-
-    @ManyToMany
-    Set<Role> roles;
+    @ManyToOne
+    @JoinColumn(name = "roomTypeId")
+    RoomType roomType;
 }

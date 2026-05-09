@@ -5,6 +5,7 @@ import com.hotelmanagement.backend.dto.request.UserUpdateRequest;
 import com.hotelmanagement.backend.dto.response.UserResponse;
 import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
+import com.hotelmanagement.backend.enums.UserRole;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.enums.ErrorCode;
 import com.hotelmanagement.backend.mapper.UserMapper;
@@ -14,10 +15,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -46,7 +45,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         HashSet<Role> roles = new HashSet<>();
 
-        Role role = roleRepository.findById(com.hotelmanagement.backend.enums.Role.USER.name())
+        Role role = roleRepository.findById(UserRole.USER.name())
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         roles.add(role);

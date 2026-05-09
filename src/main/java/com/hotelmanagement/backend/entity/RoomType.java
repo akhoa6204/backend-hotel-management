@@ -6,7 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Set;
 
@@ -14,27 +14,33 @@ import java.util.Set;
 @Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class RoomType {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-    String fullName;
-    String email;
-    String phone;
-    String password;
-    LocalDate dob;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(nullable = false, unique = true)
+    String name;
+    String description;
+    int capacity;
+    boolean active;
+    BigDecimal basePrice;
 
     @CreationTimestamp
     Date createdAt;
+
     @UpdateTimestamp
     Date updatedAt;
 
-    boolean active;
-
     @ManyToMany
-    Set<Role> roles;
+    Set<Amenity> amenities;
+
+    @OneToMany(mappedBy = "roomType", cascade = CascadeType.ALL, orphanRemoval = true)
+    Set<RoomTypeImage> roomTypeImages;
+
+    @OneToMany(mappedBy = "roomType")
+    Set<Room> rooms;
 }

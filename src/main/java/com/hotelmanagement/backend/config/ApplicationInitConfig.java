@@ -2,6 +2,7 @@ package com.hotelmanagement.backend.config;
 
 import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
+import com.hotelmanagement.backend.enums.UserRole;
 import com.hotelmanagement.backend.repository.RoleRepository;
 import com.hotelmanagement.backend.repository.UserRepository;
 import lombok.AccessLevel;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,12 +36,12 @@ public class ApplicationInitConfig {
         return args -> {
             if(userRepository.findByEmail(ADMIN_EMAIL).isEmpty()){
                 roleRepository.save(Role.builder()
-                        .name(com.hotelmanagement.backend.enums.Role.USER.name())
+                        .name(UserRole.USER.name())
                         .description("User role")
                         .build());
 
                 Role adminRole = roleRepository.save(Role.builder()
-                        .name(com.hotelmanagement.backend.enums.Role.ADMIN.name())
+                        .name(UserRole.ADMIN.name())
                         .description("Admin role")
                         .build());
 
