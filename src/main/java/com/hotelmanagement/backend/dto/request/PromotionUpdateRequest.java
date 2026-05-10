@@ -41,6 +41,7 @@ public class PromotionUpdateRequest {
     int priority;
 
     boolean stackable;
+    boolean autoApplied;
 
     @Min(1)
     int quotaTotal;

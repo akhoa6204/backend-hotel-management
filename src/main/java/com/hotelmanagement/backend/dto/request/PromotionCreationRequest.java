@@ -19,25 +19,25 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PromotionCreationRequest {
 
-    @NotBlank
+    @NotBlank(message = "REQUIRED_INVALID")
     String name;
 
-    @NotBlank
+    @NotBlank(message = "REQUIRED_INVALID")
     String description;
 
     String code;
 
-    @NotNull
+    @NotNull(message = "REQUIRED_INVALID")
     DiscountType discountType;
 
-    @NotNull
+    @NotNull(message = "REQUIRED_INVALID")
     @DecimalMin(value = "0.0", inclusive = false)
     BigDecimal discountValue;
 
-    @NotNull
+    @NotNull(message = "REQUIRED_INVALID")
     LocalDate startDate;
 
-    @NotNull
+    @NotNull(message = "REQUIRED_INVALID")
     LocalDate endDate;
 
     @Min(1)
@@ -45,6 +45,7 @@ public class PromotionCreationRequest {
     int priority;
 
     boolean stackable;
+    boolean autoApplied;
 
     @Min(1)
     int quotaTotal;

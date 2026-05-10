@@ -24,7 +24,7 @@ import java.util.Date;
 public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long Id;
+    Long id;
     String name;
     String description;
     String code;
@@ -35,6 +35,7 @@ public class Promotion {
     LocalDate startDate;
     LocalDate endAt;
     boolean active;
+    boolean autoApplied;
     int priority;
     boolean stackable;
     int quotaUsed;

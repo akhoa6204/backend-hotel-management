@@ -10,6 +10,7 @@ import com.hotelmanagement.backend.dto.response.PromotionResponse;
 import com.hotelmanagement.backend.dto.response.RoomResponse;
 import com.hotelmanagement.backend.service.PromotionService;
 import com.hotelmanagement.backend.service.RoomService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,7 +32,7 @@ public class PromotionController {
     PromotionService promotionService;
 
     @PostMapping("")
-    public ApiResponse<PromotionResponse> createRoom(@RequestBody PromotionCreationRequest request) {
+    public ApiResponse<PromotionResponse> createRoom(@RequestBody @Valid PromotionCreationRequest request) {
         PromotionResponse response = promotionService.create(request);
 
         return ApiResponse.<PromotionResponse>builder().data(response).build();

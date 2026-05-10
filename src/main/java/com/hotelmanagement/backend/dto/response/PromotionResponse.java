@@ -34,4 +34,5 @@ public class PromotionResponse {
     DiscountScope scope;
     int minTotal;
     int maxDiscountAmount;
+    boolean autoApplied;
 }
