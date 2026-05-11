@@ -8,6 +8,7 @@ import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.PromotionResponse;
 import com.hotelmanagement.backend.dto.response.RoomResponse;
+import com.hotelmanagement.backend.mapper.PromotionMapper;
 import com.hotelmanagement.backend.service.PromotionService;
 import com.hotelmanagement.backend.service.RoomService;
 import jakarta.validation.Valid;
@@ -30,17 +31,17 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class PromotionController {
     PromotionService promotionService;
-
+    PromotionMapper promotionMapper;
     @PostMapping("")
     public ApiResponse<PromotionResponse> createRoom(@RequestBody @Valid PromotionCreationRequest request) {
-        PromotionResponse response = promotionService.create(request);
+        PromotionResponse response = promotionMapper.toPromotionResponse(promotionService.create(request));
 
         return ApiResponse.<PromotionResponse>builder().data(response).build();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<PromotionResponse> getById(@PathVariable Long id) {
-        PromotionResponse response = promotionService.getById(id);
+        PromotionResponse response = promotionMapper.toPromotionResponse(promotionService.getById(id));
 
         return ApiResponse.<PromotionResponse>builder().data(response).build();
     }
@@ -60,7 +61,7 @@ public class PromotionController {
         Page<PromotionResponse> response = promotionService.getList(
                 pageRequest,
                 q
-        );
+        ).map(promotionMapper::toPromotionResponse);
 
         MetaPagination meta = MetaPagination.builder()
                 .hasPrev(response.hasPrevious())
@@ -88,7 +89,7 @@ public class PromotionController {
 
     @PutMapping("/{id}")
     public ApiResponse<PromotionResponse> updateRoomType(@RequestBody PromotionUpdateRequest request, @PathVariable Long id) {
-        PromotionResponse response = promotionService.update(id, request);
+        PromotionResponse response = promotionMapper.toPromotionResponse(promotionService.update(id, request));
 
         return ApiResponse.<PromotionResponse>builder().data(response).build();
     }

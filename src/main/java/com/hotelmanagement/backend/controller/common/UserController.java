@@ -6,8 +6,12 @@ import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.UserResponse;
 import com.hotelmanagement.backend.entity.User;
+import com.hotelmanagement.backend.mapper.UserMapper;
 import com.hotelmanagement.backend.service.UserService;
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,9 +27,11 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
-    @Autowired
-    private UserService userService;
+    UserService userService;
+    UserMapper userMapper;
 
     @GetMapping("")
     @PreAuthorize("hasRole('ADMIN')")
@@ -37,7 +43,7 @@ public class UserController {
 
 
         PageRequest pageRequest = PageRequest.of(page - 1, limit);
-        Page<UserResponse> result =  userService.getUsers(pageRequest);
+        Page<UserResponse> result =  userService.getUsers(pageRequest).map(userMapper::toUserResponse);
 
         MetaPagination meta = MetaPagination.builder()
                 .page(page)
@@ -59,17 +65,17 @@ public class UserController {
         var context = SecurityContextHolder.getContext().getAuthentication();
         String userId = context.getName();
 
-        UserResponse userResponse = userService.getMyInfo(userId);
+        UserResponse userResponse = userMapper.toUserResponse(userService.getById(userId));
 
         return ApiResponse.<UserResponse>builder().data(userResponse).build();
     }
 
     @PatchMapping("")
-    ApiResponse<UserResponse> updateUser(@RequestBody UserUpdateRequest request){
+    ApiResponse<UserResponse> updateUser(@RequestBody @Valid UserUpdateRequest request){
         var context = SecurityContextHolder.getContext().getAuthentication();
         String userId = context.getName();
 
-        UserResponse user =  userService.updateUser(userId, request);
+        UserResponse user =  userMapper.toUserResponse(userService.updateUser(userId, request));
         return ApiResponse.<UserResponse>builder()
                 .data(user)
                 .build();

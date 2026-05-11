@@ -25,7 +25,7 @@ public class PromotionResponse {
     DiscountType discountType;
     BigDecimal discountValue;
     LocalDate startDate;
-    LocalDate endAt;
+    LocalDate endDate;
     boolean active;
     int priority;
     boolean stackable;

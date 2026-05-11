@@ -35,8 +35,7 @@ public class UserService {
 
     PasswordEncoder passwordEncoder;
 
-    public UserResponse createUser(UserCreationRequest request) {
-        log.info("User creation request : {}", request);
+    public User createUser(UserCreationRequest request) {
         if (userRepository.existsByEmail(request.getEmail())){
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         };
@@ -51,21 +50,20 @@ public class UserService {
         roles.add(role);
 
         user.setRoles(roles);
-        return userMapper.toUserResponse(userRepository.save(user));
+        return userRepository.save(user);
     }
 
-    public Page<UserResponse> getUsers(PageRequest pageRequest) {
+    public Page<User> getUsers(PageRequest pageRequest) {
         return userRepository
-                .findAll(pageRequest)
-                .map(userMapper::toUserResponse);
+                .findAll(pageRequest);
     }
 
-    public UserResponse getMyInfo(String userId) {
-        return userRepository.findById(userId).map(userMapper::toUserResponse)
+    public User getById(String userId) {
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
-    public UserResponse updateUser(String userId, UserUpdateRequest request) {
+    public User updateUser(String userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         userMapper.updateUser(user, request);
@@ -78,7 +76,7 @@ public class UserService {
         }
 
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        return userRepository.save(user);
     }
 
     public void deleteUser(String userId) {

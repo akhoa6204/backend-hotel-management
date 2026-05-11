@@ -1,13 +1,15 @@
 package com.hotelmanagement.backend.dto.request;
 
-import com.hotelmanagement.backend.enums.RoomStatus;
+import com.hotelmanagement.backend.enums.BookingStatus;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.Set;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -16,6 +18,7 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-public class RoomUpdateRequest {
-    String name;
+public class BookingUpdateRequest {
+    Long roomId;
+    BookingStatus status;
 }

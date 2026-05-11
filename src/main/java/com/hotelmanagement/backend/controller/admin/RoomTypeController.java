@@ -6,6 +6,7 @@ import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.RoomTypeResponse;
 import com.hotelmanagement.backend.service.RoomTypeService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,7 +27,7 @@ public class RoomTypeController {
     RoomTypeService roomTypeService;
 
     @PostMapping("")
-    public ApiResponse<RoomTypeResponse> createRoomType(@RequestBody RoomTypeCreationRequest request) {
+    public ApiResponse<RoomTypeResponse> createRoomType(@RequestBody @Valid RoomTypeCreationRequest request) {
         RoomTypeResponse roomTypeResponse = roomTypeService.createRoomType(request);
 
         return ApiResponse.<RoomTypeResponse>builder().data(roomTypeResponse).build();

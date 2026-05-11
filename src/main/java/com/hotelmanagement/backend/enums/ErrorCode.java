@@ -8,6 +8,8 @@ public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION(9999, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
 
     INVALID_KEY(1000, "Invalid message key", HttpStatus.BAD_REQUEST),
+    REQUIRED_FIELD(1001, "%s is required", HttpStatus.BAD_REQUEST),
+    INVALID_FORMAT(1002, "%s is invalid", HttpStatus.BAD_REQUEST),
 
     FULLNAME_REQUIRED(1101, "Full name must not be blank", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(1102, "User not found", HttpStatus.NOT_FOUND),
@@ -32,16 +34,22 @@ public enum ErrorCode {
 
     PROMOTION_ALREADY_EXISTS(1801, "Promotion already exists", HttpStatus.CONFLICT),
     PROMOTION_NOT_FOUND(1802, "Promotion not found", HttpStatus.NOT_FOUND),
+    PROMOTION_QUOTA_EXCEEDED(1803, "Promotion usage limit exceeded", HttpStatus.BAD_REQUEST),
+    PROMOTION_EXPIRED(1804, "Promotion has expired", HttpStatus.BAD_REQUEST),
+    PROMOTION_NOT_STARTED(1805, "Promotion has not started yet", HttpStatus.BAD_REQUEST),
 
-    SERVICE_ALREADY_EXISTS(1801, "Service already exists", HttpStatus.CONFLICT),
-    SERVICE_NOT_FOUND(1802, "Service not found", HttpStatus.NOT_FOUND),
+    SERVICE_ALREADY_EXISTS(2101, "Service already exists", HttpStatus.CONFLICT),
+    SERVICE_NOT_FOUND(2102, "Service not found", HttpStatus.NOT_FOUND),
 
+    INVALID_BOOKING_DATE(1902, "Check-out date must be after check-in date", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_EXISTS(1902, "Room is already booked for selected dates", HttpStatus.BAD_REQUEST),
+    BOOKING_NOT_FOUND(1903, "Booking not found", HttpStatus.BAD_REQUEST),
 
     UNAUTHENTICATED(2001, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(2002, "You do not have permission", HttpStatus.FORBIDDEN),
     PERMISSION_NOT_FOUND(2003, "Permission not found", HttpStatus.NOT_FOUND),
+    NAME_REQUIRED(2005, "Name is required", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(2004, "Role not found", HttpStatus.NOT_FOUND);
-
     private final int code;
     private final String message;
     private final HttpStatus httpStatus;

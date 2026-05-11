@@ -31,7 +31,7 @@ public class RoomService {
 
     RoomMapper roomMapper;
 
-    public RoomResponse createRoom(RoomCreationRequest request) {
+    public Room createRoom(RoomCreationRequest request) {
 
         if (roomRepository.existsByNameAndActiveTrue(request.getName())) {
             throw new AppException(ErrorCode.ROOM_ALREADY_EXISTS);
@@ -49,22 +49,22 @@ public class RoomService {
 
         room.setRoomType(roomType);
 
-        return roomMapper.toRoomResponse(roomRepository.save(room));
+        return roomRepository.save(room);
     }
 
-    public Page<RoomResponse> getList(
+    public Page<Room> getList(
             PageRequest request,
             String q,
             LocalDate startDate,
             LocalDate endDate,
             Long roomTypeId){
-        return roomRepository.getRoomsWithParams(q, roomTypeId, startDate, endDate, request).map(roomMapper::toRoomResponse);
+        return roomRepository.getRoomsWithParams(q, roomTypeId, startDate, endDate, request);
     }
 
-    public RoomResponse getByid (Long id){
+    public Room getByid (Long id){
         Room room = roomRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
-        return roomMapper.toRoomResponse(room);
+        return room;
     }
 
     public void deleteById(Long id){
@@ -75,7 +75,7 @@ public class RoomService {
         roomRepository.save(room);
     }
 
-    public RoomResponse updateRoom(Long id, RoomUpdateRequest request) {
+    public Room updateRoom(Long id, RoomUpdateRequest request) {
         Room room = roomRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
 
@@ -86,7 +86,7 @@ public class RoomService {
         roomMapper.updateRoom(room, request);
 
 
-        return roomMapper.toRoomResponse(roomRepository.save(room));
+        return roomRepository.save(room);
 
     }
 

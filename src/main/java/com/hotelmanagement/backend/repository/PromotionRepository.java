@@ -10,12 +10,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<Promotion,Long> {
     boolean existsByCodeAndActiveTrue(String code);
     Optional<Promotion> findByIdAndActiveTrue(Long id);
+    Optional<Promotion> findByAutoAppliedTrueAndActiveTrue();
     @Query("""
         SELECT p
         FROM Promotion p
@@ -31,6 +33,35 @@ public interface PromotionRepository extends JpaRepository<Promotion,Long> {
     Page<Promotion> getItemsWithParams(
             @Param("q") String q,
             Pageable pageable
+    );
+
+    @Query("""
+        SELECT p
+        FROM Promotion p
+        WHERE p.active = true
+    
+        AND (
+            :promotionCode IS NULL
+            OR LOWER(p.code) = LOWER(:promotionCode)
+        )
+    
+        AND (
+            :autoApplied IS NULL
+            OR p.autoApplied = :autoApplied
+        )
+    
+        AND (
+            :today IS NULL
+            OR (
+                p.startDate <= :today
+                AND p.endDate >= :today
+            )
+        )
+    """)
+    Optional<Promotion> getItemWithParams(
+            @Param("promotionCode") String promotionCode,
+            @Param("autoApplied") Boolean autoApplied,
+            @Param("today") LocalDate today
     );
 
 }

@@ -6,6 +6,7 @@ import com.hotelmanagement.backend.enums.ErrorCode;
 import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -44,34 +45,61 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception){
-        String enumKey = exception.getFieldError().getDefaultMessage();
+    ResponseEntity<ApiResponse> handlingMethodArgumentNotValidException(
+            MethodArgumentNotValidException exception
+    ) {
+
+        FieldError fieldError = exception.getFieldError();
+
+        String enumKey = fieldError.getDefaultMessage();
+
         ErrorCode errorCode;
+
         Map<String, Object> attributes = null;
+
         try {
+
             errorCode = ErrorCode.valueOf(enumKey);
 
             var constraintViolation =
                     exception.getBindingResult()
-                            .getFieldErrors()
-                            .get(0).unwrap(ConstraintViolation.class);
-            attributes = constraintViolation.getConstraintDescriptor().getAttributes();
+                            .getAllErrors()
+                            .get(0)
+                            .unwrap(ConstraintViolation.class);
 
-            log.warn(attributes.toString());
+            attributes = constraintViolation
+                    .getConstraintDescriptor()
+                    .getAttributes();
 
         } catch (Exception e) {
+
             errorCode = ErrorCode.INVALID_KEY;
         }
+
+        String message = Objects.nonNull(attributes)
+                ? mapAttributes(errorCode.getMessage(), attributes)
+                : errorCode.getMessage();
+
+        if (fieldError != null && message.contains("%s")) {
+
+            message = message.replace(
+                    "%s",
+                    fieldError.getField()
+            );
+        }
+
         ApiResponse apiResponse = new ApiResponse();
 
-        apiResponse.setMessage(Objects.nonNull(attributes) ? mapAttributes(errorCode.getMessage(), attributes) : errorCode.getMessage());
         apiResponse.setCode(errorCode.getCode());
 
-        return ResponseEntity.badRequest().body(apiResponse);
+        apiResponse.setMessage(message);
+
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(apiResponse);
     }
 
     @ExceptionHandler(Exception.class)
-
     ResponseEntity<ApiResponse> handleException(Exception exception) {
         ApiResponse res = new ApiResponse();
 
@@ -81,9 +109,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.internalServerError().body(res);
     }
 
-    private String mapAttributes(String message, Map<String, Object> attributes) {
-        String minValue = attributes.get(MIN_ATTRIBUTE).toString();
-
-        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
+    private String mapAttributes(
+            String message,
+            Map<String, Object> attributes
+    ) {
+        for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            message = message.replace(
+                    "{" + key + "}",
+                    String.valueOf(value)
+            );
+        }
+        return message;
     }
 }

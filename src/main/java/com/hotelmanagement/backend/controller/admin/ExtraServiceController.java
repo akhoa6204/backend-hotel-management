@@ -12,6 +12,7 @@ import com.hotelmanagement.backend.entity.ExtraService;
 import com.hotelmanagement.backend.enums.ServiceType;
 import com.hotelmanagement.backend.service.ExtraServiceService;
 import com.hotelmanagement.backend.service.RoomService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,7 +34,7 @@ public class ExtraServiceController {
     ExtraServiceService extraService;
 
     @PostMapping("")
-    public ApiResponse<ExtraServiceResponse> create(@RequestBody ExtraServiceCreationRequest request) {
+    public ApiResponse<ExtraServiceResponse> create(@RequestBody @Valid ExtraServiceCreationRequest request) {
         ExtraServiceResponse extraServiceResponse = extraService.create(request);
 
         return ApiResponse.<ExtraServiceResponse>builder().data(extraServiceResponse).build();

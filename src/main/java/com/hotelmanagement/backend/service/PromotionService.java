@@ -26,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -33,11 +34,9 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PromotionService {
     PromotionRepository promotionRepository;
-
     PromotionMapper promotionMapper;
 
-    public PromotionResponse create(PromotionCreationRequest request) {
-
+    public Promotion create(PromotionCreationRequest request) {
         if (promotionRepository.existsByCodeAndActiveTrue(request.getCode())) {
             throw new AppException(ErrorCode.PROMOTION_ALREADY_EXISTS);
         }
@@ -46,23 +45,22 @@ public class PromotionService {
 
         promotion.setActive(true);
 
-        return promotionMapper.toPromotionResponse(promotionRepository.save(promotion));
+        return promotionRepository.save(promotion);
     }
 
-    public Page<PromotionResponse> getList(
+    public Page<Promotion> getList(
             PageRequest request,
             String q
     ) {
 
         return promotionRepository
-                .getItemsWithParams(q, request)
-                .map(promotionMapper::toPromotionResponse);
+                .getItemsWithParams(q, request);
     }
 
-    public PromotionResponse getById (Long id){
+    public Promotion getById (Long id){
         Promotion promotion = promotionRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
-        return promotionMapper.toPromotionResponse(promotion);
+        return promotion;
     }
 
     public void deleteById(Long id){
@@ -73,7 +71,7 @@ public class PromotionService {
         promotionRepository.save(promotion);
     }
 
-    public PromotionResponse update(Long id, PromotionUpdateRequest request) {
+    public Promotion update(Long id, PromotionUpdateRequest request) {
         Promotion promotion = promotionRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
 
@@ -84,8 +82,42 @@ public class PromotionService {
         promotionMapper.updatePromotion(promotion, request);
 
 
-        return promotionMapper.toPromotionResponse(promotionRepository.save(promotion));
+        return promotionRepository.save(promotion);
 
+    }
+    public Promotion getValidManualPromotion(String code) {
+        LocalDate today = LocalDate.now();
+
+        Promotion promotion =promotionRepository.getItemWithParams(
+                     code ,
+                    false,
+                    today
+                ).orElseThrow(() -> new AppException(ErrorCode.PROMOTION_EXPIRED)
+        );
+
+        if (promotion.getQuotaUsed() >= promotion.getQuotaTotal()) {
+            throw new AppException(ErrorCode.PROMOTION_QUOTA_EXCEEDED);
+        }
+
+        return promotion;
+    }
+
+    public Optional<Promotion> getValidAutoPromotion() {
+        return promotionRepository.getItemWithParams(
+                    null,
+                    true,
+                    LocalDate.now()
+                ).filter(
+                    promotion -> promotion.getQuotaUsed() < promotion.getQuotaTotal()
+                );
+    }
+
+    public void increaseQuota(Promotion promotion) {
+        if (promotion == null) return;
+
+        promotion.setQuotaUsed(promotion.getQuotaUsed() + 1);
+
+        promotionRepository.save(promotion);
     }
 
 

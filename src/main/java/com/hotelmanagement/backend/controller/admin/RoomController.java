@@ -8,8 +8,10 @@ import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.RoomResponse;
 import com.hotelmanagement.backend.dto.response.RoomTypeResponse;
+import com.hotelmanagement.backend.mapper.RoomMapper;
 import com.hotelmanagement.backend.service.RoomService;
 import com.hotelmanagement.backend.service.RoomTypeService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,17 +33,17 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class RoomController {
     RoomService roomService;
-
+    RoomMapper roomMapper;
     @PostMapping("")
-    public ApiResponse<RoomResponse> createRoom(@RequestBody RoomCreationRequest request) {
-        RoomResponse roomResponse = roomService.createRoom(request);
+    public ApiResponse<RoomResponse> createRoom(@RequestBody @Valid RoomCreationRequest request) {
+        RoomResponse roomResponse = roomMapper.toRoomResponse(roomService.createRoom(request));
 
         return ApiResponse.<RoomResponse>builder().data(roomResponse).build();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<RoomResponse> getById(@PathVariable Long id) {
-        RoomResponse roomResponse = roomService.getByid(id);
+        RoomResponse roomResponse =roomMapper.toRoomResponse (roomService.getByid(id));
 
         return ApiResponse.<RoomResponse>builder().data(roomResponse).build();
     }
@@ -72,7 +74,7 @@ public class RoomController {
                 startDate,
                 endDate,
                 roomTypeId
-        );
+        ).map(roomMapper::toRoomResponse);
 
         MetaPagination meta = MetaPagination.builder()
                 .hasPrev(response.hasPrevious())
@@ -100,7 +102,7 @@ public class RoomController {
 
     @PutMapping("/{id}")
     public ApiResponse<RoomResponse> updateRoomType(@RequestBody RoomUpdateRequest request, @PathVariable Long id) {
-        RoomResponse roomResponse = roomService.updateRoom(id, request);
+        RoomResponse roomResponse = roomMapper.toRoomResponse(roomService.updateRoom(id, request));
 
         return ApiResponse.<RoomResponse>builder().data(roomResponse).build();
     }

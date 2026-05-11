@@ -1,6 +1,7 @@
 package com.hotelmanagement.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -13,9 +14,9 @@ import java.util.Set;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoomCreationRequest {
-    @NotBlank
+    @NotBlank(message = "REQUIRED_FIELD")
     String name;
 
-    @NotBlank
+    @NotNull(message = "REQUIRED_FIELD")
     Long roomTypeId;
 }

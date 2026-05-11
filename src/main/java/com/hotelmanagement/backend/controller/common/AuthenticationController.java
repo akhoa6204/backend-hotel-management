@@ -5,6 +5,7 @@ import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.AuthenticationResponse;
 import com.hotelmanagement.backend.dto.response.IntrospectResponse;
 import com.hotelmanagement.backend.dto.response.UserResponse;
+import com.hotelmanagement.backend.mapper.UserMapper;
 import com.hotelmanagement.backend.service.AuthenticationService;
 import com.hotelmanagement.backend.service.UserService;
 import com.nimbusds.jose.JOSEException;
@@ -26,6 +27,7 @@ import java.text.ParseException;
 public class AuthenticationController {
     AuthenticationService authenticationService;
     UserService userService;
+    UserMapper userMapper;
 
     @PostMapping("/login")
     ApiResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
@@ -43,7 +45,7 @@ public class AuthenticationController {
     ApiResponse<UserResponse> register(@RequestBody @Valid UserCreationRequest request) {
         ApiResponse<UserResponse> response = new ApiResponse<>();
 
-        UserResponse userResponse = userService.createUser(request);
+        UserResponse userResponse = userMapper.toUserResponse(userService.createUser(request));
 
         response.setData(userResponse);
         return response;
