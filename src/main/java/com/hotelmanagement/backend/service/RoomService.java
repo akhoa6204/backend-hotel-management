@@ -90,5 +90,10 @@ public class RoomService {
 
     }
 
+    public Room findRoomAvailable(Long id, LocalDate startDate, LocalDate endDate){
+        return roomRepository.roomAvailable(id, startDate, endDate)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_ALREADY_EXISTS));
+    }
+
 
 }

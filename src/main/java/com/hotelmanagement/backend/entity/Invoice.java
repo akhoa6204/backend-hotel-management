@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Getter
@@ -33,20 +34,22 @@ public class Invoice {
     Booking booking;
 
     @OneToMany(mappedBy = "invoice")
-    Set<InvoiceItem> invoiceItems;
+    @Builder.Default
+    Set<InvoiceItem> invoiceItems = new HashSet<>();
 
     @OneToMany(mappedBy = "invoice")
-    Set<Payment> payments;
+    @Builder.Default
+    Set<Payment> payments = new HashSet<>();
 
     @OneToMany(mappedBy = "invoice")
-    Set<InvoicePromotion> invoicePromotions;
+    @Builder.Default
+    Set<InvoicePromotion> invoicePromotions = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     InvoiceStatus status;
 
     @Column(precision = 10, scale = 2)
     BigDecimal subtotal;
-
 
     @Column(precision = 10, scale = 2)
     BigDecimal discountAmount;

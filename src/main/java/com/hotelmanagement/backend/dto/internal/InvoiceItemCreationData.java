@@ -1,8 +1,10 @@
 package com.hotelmanagement.backend.dto.internal;
 
+import com.hotelmanagement.backend.dto.response.ExtraServiceResponse;
 import com.hotelmanagement.backend.dto.response.InvoiceItemResponse;
 import com.hotelmanagement.backend.dto.response.InvoicePromotionResponse;
 import com.hotelmanagement.backend.entity.Booking;
+import com.hotelmanagement.backend.entity.ExtraService;
 import com.hotelmanagement.backend.entity.Invoice;
 import com.hotelmanagement.backend.enums.InvoiceItemType;
 import lombok.*;
@@ -21,4 +23,5 @@ public class InvoiceItemCreationData {
     InvoiceItemType type;
     long quantity;
     BigDecimal unitPrice;
+    ExtraService extraService;
 }

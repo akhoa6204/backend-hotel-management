@@ -23,8 +23,7 @@ import java.time.LocalDateTime;
 public class InvoiceItemResponse {
     Long id;
     InvoiceItemType type;
-    Long extraServiceId;
-    String extraServiceName;
+    ExtraServiceResponse extraService;
     Integer quantity;
     BigDecimal unitPrice;
 }

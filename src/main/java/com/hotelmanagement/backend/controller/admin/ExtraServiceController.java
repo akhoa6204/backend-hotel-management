@@ -10,6 +10,7 @@ import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.RoomResponse;
 import com.hotelmanagement.backend.entity.ExtraService;
 import com.hotelmanagement.backend.enums.ServiceType;
+import com.hotelmanagement.backend.mapper.ExtraServiceMapper;
 import com.hotelmanagement.backend.service.ExtraServiceService;
 import com.hotelmanagement.backend.service.RoomService;
 import jakarta.validation.Valid;
@@ -32,17 +33,18 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class ExtraServiceController {
     ExtraServiceService extraService;
+    ExtraServiceMapper extraServiceMapper;
 
     @PostMapping("")
     public ApiResponse<ExtraServiceResponse> create(@RequestBody @Valid ExtraServiceCreationRequest request) {
-        ExtraServiceResponse extraServiceResponse = extraService.create(request);
+        ExtraServiceResponse extraServiceResponse = extraServiceMapper.toExtraServiceResponse(extraService.create(request));
 
         return ApiResponse.<ExtraServiceResponse>builder().data(extraServiceResponse).build();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<ExtraServiceResponse> getById(@PathVariable Long id) {
-        ExtraServiceResponse extraServiceResponse  = extraService.getByid(id);
+        ExtraServiceResponse extraServiceResponse  = extraServiceMapper.toExtraServiceResponse(extraService.getByid(id));
 
         return ApiResponse.<ExtraServiceResponse>builder().data(extraServiceResponse).build();
     }
@@ -64,7 +66,7 @@ public class ExtraServiceController {
                 pageRequest,
                 q,
                type
-        );
+        ).map(extraServiceMapper::toExtraServiceResponse);
 
         MetaPagination meta = MetaPagination.builder()
                 .hasPrev(response.hasPrevious())
@@ -82,7 +84,7 @@ public class ExtraServiceController {
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<String> deleteRoomType(@PathVariable Long id) {
+    public ApiResponse<String> deleteById(@PathVariable Long id) {
         extraService.deleteById(id);
         return ApiResponse.<String>builder()
                 .message("Delete Service Successfully")
@@ -91,8 +93,8 @@ public class ExtraServiceController {
 
 
     @PutMapping("/{id}")
-    public ApiResponse<ExtraServiceResponse> updateRoomType(@RequestBody ExtraServiceUpdateRequest request, @PathVariable Long id) {
-        ExtraServiceResponse response = extraService.update(id, request);
+    public ApiResponse<ExtraServiceResponse> update(@RequestBody ExtraServiceUpdateRequest request, @PathVariable Long id) {
+        ExtraServiceResponse response = extraServiceMapper.toExtraServiceResponse(extraService.update(id, request));
 
         return ApiResponse.<ExtraServiceResponse>builder().data(response).build();
     }

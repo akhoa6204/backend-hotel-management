@@ -1,12 +1,10 @@
 package com.hotelmanagement.backend.mapper;
 
 import com.hotelmanagement.backend.dto.internal.InvoiceCreationData;
+import com.hotelmanagement.backend.dto.internal.InvoiceUpdateData;
 import com.hotelmanagement.backend.dto.response.InvoiceResponse;
 import com.hotelmanagement.backend.entity.Invoice;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface InvoiceMapper {
@@ -16,4 +14,7 @@ public interface InvoiceMapper {
     @Mapping(target = "bookingId", source = "booking.id")
     @Mapping(target = "promotions", source = "invoicePromotions")
     InvoiceResponse toInvoiceResponse(Invoice invoice);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateInvoice(@MappingTarget Invoice invoice, InvoiceUpdateData data);
 }

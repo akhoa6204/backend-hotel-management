@@ -1,5 +1,7 @@
 package com.hotelmanagement.backend.controller.admin;
 
+import com.hotelmanagement.backend.dto.request.InvoiceAddItemRequest;
+import com.hotelmanagement.backend.dto.request.InvoiceItemUpdateRequest;
 import com.hotelmanagement.backend.dto.request.PromotionCreationRequest;
 import com.hotelmanagement.backend.dto.request.PromotionUpdateRequest;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
@@ -50,6 +52,50 @@ public class InvoiceController {
         return ApiResponse.<List<InvoiceResponse>>builder()
                 .data(response.getContent())
                 .pagination(meta)
+                .build();
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<InvoiceResponse> getList(
+           @PathVariable String id
+    ){
+        InvoiceResponse response = invoiceMapper.toInvoiceResponse(invoiceService.getById(id));
+
+        return ApiResponse.<InvoiceResponse>builder()
+                .data(response)
+                .build();
+    }
+
+
+    @PostMapping("/{id}/invoice-items")
+    public ApiResponse<InvoiceResponse> updateAddInvoiceItem(
+            @PathVariable String id,
+            @RequestBody @Valid InvoiceAddItemRequest request){
+        InvoiceResponse response = invoiceMapper.toInvoiceResponse(invoiceService.addInvoiceItem(id, request));
+
+        return ApiResponse.<InvoiceResponse>builder()
+                .data(response)
+                .build();
+    }
+
+    @PatchMapping("/invoice-items/{id}")
+    public ApiResponse<InvoiceResponse> updateInvoiceItem(
+            @PathVariable Long id,
+            @RequestBody @Valid InvoiceItemUpdateRequest request
+    ){
+        InvoiceResponse response = invoiceMapper.toInvoiceResponse(invoiceService.updateInvoiceItem(id, request));
+        return ApiResponse.<InvoiceResponse>builder()
+                .data(response)
+                .build();
+    }
+
+    @DeleteMapping("/invoice-items/{id}")
+    public ApiResponse<InvoiceResponse> deleteItem(
+            @PathVariable Long id
+    ){
+        InvoiceResponse response = invoiceMapper.toInvoiceResponse(invoiceService.removeInvoiceItem(id));
+        return ApiResponse.<InvoiceResponse>builder()
+                .data(response)
                 .build();
     }
 }

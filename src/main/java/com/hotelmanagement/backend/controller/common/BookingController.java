@@ -68,4 +68,46 @@ public class BookingController {
                 .pagination(metaPagination)
                 .build();
     }
+
+    @PatchMapping("/{id}")
+    ApiResponse<BookingResponse> updateRoom(@PathVariable String id, @RequestBody BookingUpdateRequest request) {
+        BookingResponse result = bookingMapper.toBookingResponse(bookingService.updateBooking(id ,request));
+        return ApiResponse.<BookingResponse>builder()
+                .data(result)
+                .build();
+    }
+
+    @PatchMapping("/{id}/confirm")
+    ApiResponse<BookingResponse> confirmBooking(@PathVariable String id) {
+        BookingResponse result = bookingMapper.toBookingResponse(bookingService.confirmBooking(id));
+        return ApiResponse.<BookingResponse>builder()
+                .data(result)
+                .build();
+    }
+
+    @PatchMapping("/{id}/checkin")
+    ApiResponse<BookingResponse> checkinBooking(@PathVariable String id) {
+        BookingResponse result = bookingMapper.toBookingResponse(bookingService.checkinBooking(id));
+        return ApiResponse.<BookingResponse>builder()
+                .data(result)
+                .build();
+    }
+
+    @PatchMapping("/{id}/checkout")
+    ApiResponse<BookingResponse> checkoutBooking(@PathVariable String id) {
+        BookingResponse result = bookingMapper.toBookingResponse(bookingService.checkoutBooking(id));
+        return ApiResponse.<BookingResponse>builder()
+                .data(result)
+                .build();
+    }
+
+    @PatchMapping("/{id}/cancelled")
+    ApiResponse<BookingResponse> cancelledBooking(@PathVariable String id) {
+        BookingResponse result = bookingMapper.toBookingResponse(bookingService.cancelBooking(id));
+        return ApiResponse.<BookingResponse>builder()
+                .data(result)
+                .build();
+    }
+
+
 }

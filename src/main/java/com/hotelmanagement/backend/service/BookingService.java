@@ -3,6 +3,8 @@ package com.hotelmanagement.backend.service;
 import com.hotelmanagement.backend.Utils.DateUtils;
 import com.hotelmanagement.backend.dto.internal.*;
 import com.hotelmanagement.backend.dto.request.BookingCreationRequest;
+import com.hotelmanagement.backend.dto.request.BookingUpdateRequest;
+import com.hotelmanagement.backend.dto.request.RoomUpdateRequest;
 import com.hotelmanagement.backend.dto.response.BookingResponse;
 import com.hotelmanagement.backend.entity.*;
 import com.hotelmanagement.backend.enums.*;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -49,7 +52,7 @@ public class BookingService {
                 ? userService.getById(request.getCustomerId())
                 : null;
 
-        Room room = roomService.getByid(request.getRoomId());
+        Room room = roomService.findRoomAvailable(request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate());
 
         PricingResult pricing = pricingService.calculateBookingPrice(request, room);
 
@@ -77,6 +80,8 @@ public class BookingService {
 
         Invoice savedInvoice = invoiceService.create(invoiceCreationData);
 
+        savedBooking.setInvoice(savedInvoice);
+
         InvoiceItemCreationData invoiceItemCreationData = InvoiceItemCreationData.builder()
                 .invoice(savedInvoice)
                 .type(InvoiceItemType.ROOM)
@@ -84,7 +89,11 @@ public class BookingService {
                 .unitPrice(room.getRoomType().getBasePrice())
                 .build();
 
-        invoiceItemService.create(invoiceItemCreationData);
+        InvoiceItem savedItem = invoiceItemService.create(invoiceItemCreationData);
+
+        savedInvoice.getInvoiceItems().add(savedItem);
+
+        invoiceService.reCalculate(savedInvoice);
 
         Promotion manualPromotion = pricing.getPromotion();
         if( manualPromotion != null ) {
@@ -113,6 +122,8 @@ public class BookingService {
                     .build();
             invoicePromotionService.create(invoiceAutoPromotionCreationData);
         }
+
+        invoiceService.reCalculate(savedInvoice);
         return savedBooking;
     }
 
@@ -155,5 +166,160 @@ public class BookingService {
                     ErrorCode.BOOKING_ALREADY_EXISTS
             );
         }
+    }
+
+    public Booking updateBooking(String id, BookingUpdateRequest request) {
+        Booking booking = getByid(id);
+        if (booking.getStatus() == BookingStatus.CHECKED_OUT) {
+            throw new AppException(ErrorCode.INVALID_BOOKING_STATUS);
+        }
+
+        LocalDate now  = LocalDate.now();
+        boolean isFutureCheckInDate = booking.getCheckInDate().isAfter(now);
+        boolean isCheckedIn = booking.getStatus() == BookingStatus.CHECKED_IN;
+
+        LocalDate checkinDate = isFutureCheckInDate
+                ? booking.getCheckInDate()
+                : now;
+
+        Room room = roomService.findRoomAvailable(
+                request.getRoomId(),
+                checkinDate,
+                booking.getCheckOutDate()
+        );
+
+        if (isCheckedIn) {
+            RoomUpdateRequest oldRoomUpdateRequest = RoomUpdateRequest.builder()
+                    .status(RoomStatus.VACANT_DIRTY)
+                    .build();
+
+            roomService.updateRoom(booking.getRoom().getId(), oldRoomUpdateRequest);
+
+            RoomUpdateRequest newRoomUpdateRequest = RoomUpdateRequest.builder()
+                    .status(RoomStatus.OCCUPIED_CLEAN)
+                    .build();
+
+            roomService.updateRoom(room.getId(), newRoomUpdateRequest);
+        }
+
+
+        booking.setRoom(room);
+
+        bookingRepository.save(booking);
+
+        return booking;
+    }
+
+    public Booking confirmBooking(String id){
+        Booking  booking = getByid(id);
+        Invoice invoice = booking.getInvoice();
+        Set<Payment> payments = invoice.getPayments();
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_BOOKING_STATUS);
+        }
+        boolean hasSuccessPayment = payments.stream()
+                .anyMatch(payment ->
+                        payment.getStatus() == PaymentStatus.SUCCESS);
+
+        if (!hasSuccessPayment) {
+            throw new AppException(ErrorCode.PAYMENT_REQUIRED_TO_CONFIRM_BOOKING);
+        }
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        invoice.setStatus(InvoiceStatus.ACTIVE);
+        return bookingRepository.save(booking);
+    }
+
+    public Booking cancelBooking(String id) {
+        Booking booking = getByid(id);
+        Invoice invoice = booking.getInvoice();
+        booking.setStatus(BookingStatus.CANCELLED);
+        invoice.setStatus(InvoiceStatus.CANCELLED);
+        return bookingRepository.save(booking);
+    }
+    public Booking checkoutBooking(String id){
+        Booking booking = getByid(id);
+
+        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+            throw new AppException(ErrorCode.INVALID_BOOKING_STATUS);
+        }
+
+        Invoice invoice = booking.getInvoice();
+
+        BigDecimal totalPaidAmount = invoice.getPayments()
+                .stream()
+                .filter(payment -> payment.getStatus() == PaymentStatus.SUCCESS)
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal finalTotal = invoice.getSubtotal()
+                .subtract(invoice.getDiscountAmount());
+
+        if (totalPaidAmount.compareTo(finalTotal) < 0) {
+            throw new AppException(ErrorCode.INVOICE_NOT_FULLY_PAID);
+        }
+
+        booking.setStatus(BookingStatus.CHECKED_OUT);
+        invoice.setStatus(InvoiceStatus.DONE);
+        invoice.setRemainingAmount(BigDecimal.ZERO);
+
+        RoomUpdateRequest roomUpdateRequest =
+                RoomUpdateRequest.builder()
+                        .status(RoomStatus.VACANT_DIRTY)
+                        .build();
+
+        roomService.updateRoom(booking.getRoom().getId(), roomUpdateRequest);
+
+        return bookingRepository.save(booking);
+    }
+    public Booking checkinBooking(String id){
+        Booking booking = getByid(id);
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new AppException(ErrorCode.INVALID_BOOKING_STATUS);
+        }
+        Invoice invoice = booking.getInvoice();
+        Set<Payment> payments = invoice.getPayments();
+        BigDecimal totalSuccessRoomPayment = payments.stream()
+                .filter(payment ->
+                        payment.getStatus() == PaymentStatus.SUCCESS
+                                && (
+                                    payment.getType() == PaymentType.ROOM_PAYMENT
+                                    || payment.getType() == PaymentType.DEPOSIT
+                                )
+                )
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalRoomAmount = invoice.getInvoiceItems()
+                .stream()
+                .filter(item -> item.getType() == InvoiceItemType.ROOM)
+                .map(item -> item.getUnitPrice()
+                        .multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .subtract(invoice.getDiscountAmount());
+
+        if (totalRoomAmount.compareTo(BigDecimal.ZERO) < 0) {
+            totalRoomAmount = BigDecimal.ZERO;
+        }
+
+        boolean hasSuccessRoomPayment =
+                totalSuccessRoomPayment.compareTo(totalRoomAmount) >= 0;
+        if (!hasSuccessRoomPayment) {
+            throw new AppException(ErrorCode.ROOM_PAYMENT_REQUIRED_FOR_CHECKIN);
+        }
+        booking.setStatus(BookingStatus.CHECKED_IN);
+        invoice.setStatus(InvoiceStatus.ACTIVE);
+
+        RoomUpdateRequest roomUpdateRequest =
+                RoomUpdateRequest.builder()
+                        .status(RoomStatus.OCCUPIED_CLEAN)
+                        .build();
+
+        roomService.updateRoom(
+                booking.getRoom().getId(),
+                roomUpdateRequest
+        );
+
+        return bookingRepository.save(booking);
     }
 }

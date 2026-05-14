@@ -20,5 +20,4 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class BookingUpdateRequest {
     Long roomId;
-    BookingStatus status;
 }

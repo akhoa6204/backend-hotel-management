@@ -33,7 +33,7 @@ public class ExtraServiceService {
 
     ExtraServiceMapper extraServiceMapper;
 
-    public ExtraServiceResponse create(ExtraServiceCreationRequest request) {
+    public ExtraService create(ExtraServiceCreationRequest request) {
 
         if (extraServiceRepository.existsByNameAndActiveTrue(request.getName())) {
             throw new AppException(ErrorCode.SERVICE_ALREADY_EXISTS);
@@ -43,20 +43,20 @@ public class ExtraServiceService {
 
         extraService.setActive(true);
 
-        return extraServiceMapper.toExtraServiceResponse(extraServiceRepository.save(extraService));
+        return extraServiceRepository.save(extraService);
     }
 
-    public Page<ExtraServiceResponse> getList(
+    public Page<ExtraService> getList(
             PageRequest request,
             String q,
             ServiceType type){
-        return extraServiceRepository.getServices(q, type, request).map(extraServiceMapper::toExtraServiceResponse);
+        return extraServiceRepository.getServices(q, type, request);
     }
 
-    public ExtraServiceResponse getByid (Long id){
+    public ExtraService getByid (Long id){
         ExtraService extraService = extraServiceRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_FOUND));
-        return extraServiceMapper.toExtraServiceResponse(extraService);
+        return extraService;
     }
 
     public void deleteById(Long id){
@@ -67,7 +67,7 @@ public class ExtraServiceService {
         extraServiceRepository.save(extraService);
     }
 
-    public ExtraServiceResponse update(Long id, ExtraServiceUpdateRequest request) {
+    public ExtraService update(Long id, ExtraServiceUpdateRequest request) {
         ExtraService extraService = extraServiceRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_FOUND));
 
@@ -78,7 +78,7 @@ public class ExtraServiceService {
         extraServiceMapper.updateService(extraService, request);
 
 
-        return extraServiceMapper.toExtraServiceResponse(extraServiceRepository.save(extraService));
+        return extraServiceRepository.save(extraService);
 
     }
 

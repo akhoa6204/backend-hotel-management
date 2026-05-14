@@ -2,6 +2,7 @@ package com.hotelmanagement.backend.mapper;
 
 import com.hotelmanagement.backend.dto.internal.BookingCreationData;
 import com.hotelmanagement.backend.dto.request.BookingCreationRequest;
+import com.hotelmanagement.backend.dto.request.BookingUpdateRequest;
 import com.hotelmanagement.backend.dto.request.UserCreationRequest;
 import com.hotelmanagement.backend.dto.request.UserUpdateRequest;
 import com.hotelmanagement.backend.dto.response.BookingResponse;
@@ -18,7 +19,5 @@ public interface BookingMapper {
             target = "invoiceId",
             source = "invoice.id"
     )
-    BookingResponse toBookingResponse(
-            Booking booking
-    );
+    BookingResponse toBookingResponse(Booking booking);
 }

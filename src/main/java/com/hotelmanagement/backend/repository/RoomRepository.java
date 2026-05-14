@@ -38,4 +38,27 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
             @Param("endDate") LocalDate endDate,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT r
+        FROM Room r
+        WHERE r.id = :id
+            AND r.active = true
+            AND NOT EXISTS (
+                SELECT b.id
+                FROM Booking b
+                WHERE b.room.id = r.id
+                    AND b.checkInDate <= :endDate
+                    AND b.checkOutDate >= :startDate
+                    AND b.status NOT IN (
+                        com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
+                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT
+                    )
+            )
+       """)
+    Optional<Room> roomAvailable(
+            @Param("id") Long id,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }
