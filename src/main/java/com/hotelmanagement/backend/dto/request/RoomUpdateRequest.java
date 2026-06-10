@@ -19,4 +19,5 @@ import java.util.Set;
 public class RoomUpdateRequest {
     String name;
     RoomStatus status;
+    Long roomTypeId;
 }

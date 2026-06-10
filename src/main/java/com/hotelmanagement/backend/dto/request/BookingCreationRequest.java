@@ -21,11 +21,12 @@ public class BookingCreationRequest {
     String staffId;
     @NotNull(message = "REQUIRED_FIELD")
 
+    @NotNull(message = "REQUIRED_FIELD")
     LocalDate checkInDate;
     @NotNull(message = "REQUIRED_FIELD")
     LocalDate checkOutDate;
     LocalTime estimatedArrivalTime;
-    boolean bookingForSomeoneElse;
+    Boolean bookingForSomeoneElse;
 
     @NotBlank(message = "REQUIRED_FIELD")
     String guestName;
@@ -33,8 +34,6 @@ public class BookingCreationRequest {
     @Pattern(regexp = "^[0-9]{10}$", message = "PHONE_INVALID")
     String guestPhone;
 
-    @NotBlank(message = "REQUIRED_FIELD")
-    @Email(message = "INVALID_EMAIL")
     String guestEmail;
 
     String promotionCode;

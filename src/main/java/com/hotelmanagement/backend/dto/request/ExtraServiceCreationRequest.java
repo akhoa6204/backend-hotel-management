@@ -2,6 +2,7 @@ package com.hotelmanagement.backend.dto.request;
 
 import com.hotelmanagement.backend.enums.ServiceType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,16 +15,15 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ExtraServiceCreationRequest {
-    @NotBlank
+    @NotBlank(message = "REQUIRED_FIELD")
     String name;
 
-    @NotBlank
+    @NotBlank(message = "REQUIRED_FIELD")
     String description;
 
-    @NotBlank
-    @Size(min = 1)
+    @NotNull(message = "REQUIRED_FIELD")
     BigDecimal basePrice;
 
-    @NotBlank
+    @NotNull(message = "REQUIRED_FIELD")
     ServiceType type;
 }

@@ -6,10 +6,13 @@ import com.hotelmanagement.backend.dto.request.LogoutRequest;
 import com.hotelmanagement.backend.dto.request.RefreshRequest;
 import com.hotelmanagement.backend.dto.response.AuthenticationResponse;
 import com.hotelmanagement.backend.dto.response.IntrospectResponse;
+import com.hotelmanagement.backend.dto.response.UserShortResponse;
 import com.hotelmanagement.backend.entity.InvalidatedToken;
+import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.enums.ErrorCode;
+import com.hotelmanagement.backend.mapper.UserMapper;
 import com.hotelmanagement.backend.repository.InvalidatedTokenRepository;
 import com.hotelmanagement.backend.repository.UserRepository;
 import com.nimbusds.jose.*;
@@ -40,6 +43,7 @@ import java.util.*;
 public class AuthenticationService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
+    UserMapper userMapper;
 
     @NonFinal
     @Value("${jwt.signer-key}")
@@ -64,9 +68,13 @@ public class AuthenticationService {
         }
 
         String token = generateToken(user);
+
+        UserShortResponse userShortResponse = userMapper.toUserShortResponse(user);
+
         return AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(true)
+                .user(userShortResponse)
                 .build();
     }
     private String generateToken(User user) {
@@ -118,13 +126,12 @@ public class AuthenticationService {
 
     String buildScope(User user) {
         StringJoiner scope = new StringJoiner(" ");
-        if (!CollectionUtils.isEmpty(user.getRoles())) {
-            user.getRoles().forEach(role -> {
-                scope.add("ROLE_" + role.getName());
-                if(!CollectionUtils.isEmpty(role.getPermissions())){
-                    role.getPermissions().forEach(permission -> scope.add(permission.getName()));
-                }
-            });
+        if (user.getRole() != null) {
+            Role role = user.getRole();
+            scope.add("ROLE_" + role.getName());
+            if(!CollectionUtils.isEmpty(role.getPermissions())){
+                role.getPermissions().forEach(permission -> scope.add(permission.getName()));
+            }
         }
         return scope.toString();
     }

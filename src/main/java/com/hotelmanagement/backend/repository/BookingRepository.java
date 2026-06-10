@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,7 +82,7 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
         FROM Booking b
         WHERE
             b.status = 'PENDING'
-            AND b.checkInDate <= :today
+            AND b.createdAt <= :expiredAt
             AND NOT EXISTS (
                 SELECT p
                 FROM Payment p
@@ -91,6 +92,6 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
             )
     """)
     List<Booking> findNoPaidNoShowBookings(
-            @Param("today") LocalDate today
+            @Param("expiredAt") LocalDateTime expiredAt
     );
 }

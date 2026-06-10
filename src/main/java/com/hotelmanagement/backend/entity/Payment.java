@@ -48,6 +48,8 @@ public class Payment {
 
     LocalDateTime paidAt;
 
+    LocalDateTime expiredAt;
+
     @CreationTimestamp
     LocalDateTime createdAt;
 

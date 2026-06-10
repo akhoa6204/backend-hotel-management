@@ -92,7 +92,7 @@ public class RoomController {
     }
 
     @DeleteMapping("/{id}")
-    public ApiResponse<String> deleteRoomType(@PathVariable Long id) {
+    public ApiResponse<String> deleteRoom(@PathVariable Long id) {
         roomService.deleteById(id);
         return ApiResponse.<String>builder()
                 .message("Delete Room Successfully")
@@ -100,8 +100,8 @@ public class RoomController {
     }
 
 
-    @PutMapping("/{id}")
-    public ApiResponse<RoomResponse> updateRoomType(@RequestBody RoomUpdateRequest request, @PathVariable Long id) {
+    @PatchMapping("/{id}")
+    public ApiResponse<RoomResponse> updateRoom(@RequestBody RoomUpdateRequest request, @PathVariable Long id) {
         RoomResponse roomResponse = roomMapper.toRoomResponse(roomService.updateRoom(id, request));
 
         return ApiResponse.<RoomResponse>builder().data(roomResponse).build();

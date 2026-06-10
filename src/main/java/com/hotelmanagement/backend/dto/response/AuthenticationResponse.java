@@ -1,5 +1,6 @@
 package com.hotelmanagement.backend.dto.response;
 
+import com.hotelmanagement.backend.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,4 +14,5 @@ import lombok.experimental.FieldDefaults;
 public class AuthenticationResponse {
     boolean authenticated;
     String token;
+    UserShortResponse user;
 }

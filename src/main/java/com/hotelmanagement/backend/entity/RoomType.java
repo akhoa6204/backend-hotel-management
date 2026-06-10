@@ -22,7 +22,7 @@ public class RoomType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false    )
     String name;
     String description;
     int capacity;

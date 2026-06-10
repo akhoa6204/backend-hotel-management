@@ -37,3 +37,4 @@ app:
 sepay:
   merchant-id: ${SEPAY_MERCHANT_ID}
   secret-key: ${SEPAY_SECRET_KEY}
+  env:

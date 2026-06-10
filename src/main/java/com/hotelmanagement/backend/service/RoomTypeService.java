@@ -62,8 +62,8 @@ public class RoomTypeService {
     public Page<RoomTypeResponse> getRoomTypes(PageRequest request, String q) {
         return roomTypeRepository.findByNameContainingIgnoreCaseAndActiveTrue(q, request).map(roomTypeMapper::toRoomTypeResponse);
     }
-    public RoomTypeResponse getRoomType(Long id) {
-        return roomTypeRepository.findByIdAndActiveTrue(id).map(roomTypeMapper::toRoomTypeResponse).orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
+    public RoomType getRoomType(Long id) {
+        return roomTypeRepository.findByIdAndActiveTrue(id).orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
     }
     public void deleteRoomType(Long id){
         RoomType roomType = roomTypeRepository.findByIdAndActiveTrue(id).orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));

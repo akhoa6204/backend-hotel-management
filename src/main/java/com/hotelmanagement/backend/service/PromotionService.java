@@ -92,7 +92,7 @@ public class PromotionService {
                      code ,
                     false,
                     today
-                ).orElseThrow(() -> new AppException(ErrorCode.PROMOTION_EXPIRED)
+                ).stream().findFirst().orElseThrow(() -> new AppException(ErrorCode.PROMOTION_EXPIRED)
         );
 
         if (promotion.getQuotaUsed() >= promotion.getQuotaTotal()) {
@@ -107,9 +107,7 @@ public class PromotionService {
                     null,
                     true,
                     LocalDate.now()
-                ).filter(
-                    promotion -> promotion.getQuotaUsed() < promotion.getQuotaTotal()
-                );
+                ).stream().findFirst();
     }
 
     public void increaseQuota(Promotion promotion) {

@@ -1,6 +1,7 @@
 package com.hotelmanagement.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,15 +15,15 @@ import java.util.Set;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoomTypeCreationRequest {
-    @NotBlank
+    @NotBlank(message = "REQUIRED_FIELD")
     String name;
-    @NotBlank
+    @NotBlank(message = "REQUIRED_FIELD")
     String description;
-    @Size(min = 1, max=10)
+
+    @NotNull(message = "REQUIRED_FIELD")
     int capacity;
 
-    @NotBlank
-    @Size(min = 1)
+    @NotNull(message = "REQUIRED_FIELD")
     BigDecimal basePrice;
 
     Set<String> amenities;

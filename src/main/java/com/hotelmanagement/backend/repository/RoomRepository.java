@@ -30,6 +30,21 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
             OR :q = ''
             OR LOWER(r.name) LIKE LOWER(CONCAT('%', :q, '%'))
         )
+        AND (
+            :roomTypeId IS NULL
+            OR r.roomType.id = :roomTypeId
+        )
+        AND NOT EXISTS (
+                SELECT b.id
+                FROM Booking b
+                WHERE b.room.id = r.id
+                    AND b.checkInDate <= :endDate
+                    AND b.checkOutDate >= :startDate
+                    AND b.status NOT IN (
+                        com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
+                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT
+                    )
+            )
     """)
     Page<Room> getRoomsWithParams(
             @Param("q") String q,

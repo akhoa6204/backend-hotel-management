@@ -35,6 +35,7 @@ public class User {
 
     boolean active;
 
-    @ManyToMany
-    Set<Role> roles;
+    @ManyToOne
+    @JoinColumn(name = "roleId")
+    Role role;
 }

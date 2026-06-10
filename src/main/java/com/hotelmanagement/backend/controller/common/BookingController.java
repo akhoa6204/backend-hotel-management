@@ -1,22 +1,18 @@
 package com.hotelmanagement.backend.controller.common;
 
+import com.hotelmanagement.backend.dto.response.PricingResultResponse;
 import com.hotelmanagement.backend.dto.request.*;
 import com.hotelmanagement.backend.dto.response.*;
 import com.hotelmanagement.backend.mapper.BookingMapper;
-import com.hotelmanagement.backend.service.AuthenticationService;
 import com.hotelmanagement.backend.service.BookingService;
-import com.hotelmanagement.backend.service.UserService;
-import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -27,17 +23,17 @@ public class BookingController {
     BookingService bookingService;
     BookingMapper bookingMapper;
     @PostMapping("")
-    ApiResponse<BookingResponse> create(@RequestBody BookingCreationRequest request) {
-        BookingResponse result = bookingMapper.toBookingResponse(bookingService.create(request));
+    ApiResponse<BookingCreationResponse> create(@RequestBody @Valid BookingCreationRequest request) {
+        BookingCreationResponse result = bookingService.create(request);
 
-        return ApiResponse.<BookingResponse>builder()
+        return ApiResponse.<BookingCreationResponse>builder()
                 .data(result)
                 .build();
     }
 
     @GetMapping("/{id}")
     ApiResponse<BookingResponse> getById(@PathVariable String id) {
-        BookingResponse result = bookingMapper.toBookingResponse(bookingService.getByid(id));
+        BookingResponse result = bookingService.getByid(id);
 
         return ApiResponse.<BookingResponse>builder()
                 .data(result)
@@ -109,5 +105,12 @@ public class BookingController {
                 .build();
     }
 
+    @PostMapping("/quote")
+    ApiResponse<PricingResultResponse> quote(@RequestBody @Valid QuoteRequest request) {
+        PricingResultResponse result = bookingService.quote(request);
+        return ApiResponse.<PricingResultResponse>builder()
+                .data(result)
+                .build();
+    }
 
 }

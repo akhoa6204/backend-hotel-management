@@ -6,6 +6,7 @@ import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.UserResponse;
 import com.hotelmanagement.backend.entity.User;
+import com.hotelmanagement.backend.enums.UserRole;
 import com.hotelmanagement.backend.mapper.UserMapper;
 import com.hotelmanagement.backend.service.UserService;
 import jakarta.validation.Valid;
@@ -32,33 +33,6 @@ import java.util.List;
 public class UserController {
     UserService userService;
     UserMapper userMapper;
-
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
-    ApiResponse<List<UserResponse>> getUsers(
-            @RequestParam(required = false, defaultValue = "1") int page,
-            @RequestParam(required = false, defaultValue = "10") int limit
-    ) {
-        SecurityContext context = SecurityContextHolder.getContext();
-
-
-        PageRequest pageRequest = PageRequest.of(page - 1, limit);
-        Page<UserResponse> result =  userService.getUsers(pageRequest).map(userMapper::toUserResponse);
-
-        MetaPagination meta = MetaPagination.builder()
-                .page(page)
-                .limit(limit)
-                .total(result.getTotalElements())
-                .totalPages(result.getTotalPages())
-                .hasNext(result.hasNext())
-                .hasPrev(result.hasPrevious())
-                .build();
-
-        return ApiResponse.<List<UserResponse>>builder()
-                .data(result.getContent())
-                .pagination(meta)
-                .build();
-    }
 
     @GetMapping("/me")
     ApiResponse<UserResponse> getUser() {

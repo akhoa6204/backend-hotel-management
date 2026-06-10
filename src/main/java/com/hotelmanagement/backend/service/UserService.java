@@ -1,7 +1,6 @@
 package com.hotelmanagement.backend.service;
 
-import com.hotelmanagement.backend.dto.request.UserCreationRequest;
-import com.hotelmanagement.backend.dto.request.UserUpdateRequest;
+import com.hotelmanagement.backend.dto.request.*;
 import com.hotelmanagement.backend.dto.response.UserResponse;
 import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
@@ -42,20 +41,24 @@ public class UserService {
 
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        HashSet<Role> roles = new HashSet<>();
 
         Role role = roleRepository.findById(UserRole.USER.name())
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
-        roles.add(role);
-
-        user.setRoles(roles);
+        user.setRole(role);
         return userRepository.save(user);
     }
 
-    public Page<User> getUsers(PageRequest pageRequest) {
-        return userRepository
-                .findAll(pageRequest);
+    public Page<User> getEmployees(PageRequest pageRequest, UserRole role) {
+        if (role == null) {
+            return userRepository.findEmployees(pageRequest);
+        }
+
+        if (role == UserRole.USER) {
+            return Page.empty(pageRequest);
+        }
+
+        return userRepository.findEmployeesByRole(role.name(), pageRequest);
     }
 
     public User getById(String userId) {
@@ -70,9 +73,9 @@ public class UserService {
         if(request.getPassword()!=null){
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-        if(!CollectionUtils.isEmpty(request.getRoles())) {
-            var roles = roleRepository.findAllById(request.getRoles());
-            user.setRoles(new HashSet<>(roles));
+        if(request.getRole() != null) {
+            Role role = roleRepository.findById(request.getRole()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+            user.setRole(role);
         }
 
 
@@ -81,5 +84,39 @@ public class UserService {
 
     public void deleteUser(String userId) {
         userRepository.deleteById(userId);
+    }
+
+    public User createEmployee(EmployeeCreationRequest request) {
+        User user = userMapper.employeeToUser(request);
+
+        String defaultPassword = "123";
+        user.setPassword(passwordEncoder.encode(defaultPassword));
+
+        Role role = roleRepository.findById(String.valueOf(request.getRole()))
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+
+        user.setRole(role);
+        user.setActive(true);
+        return userRepository.save(user);
+    }
+
+    public void resetPassword(String userId, EmployeeResetPasswordRequest request) {
+        User user = getById(userId);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+    };
+
+    public User updateEmployee(String userId, EmployeeUpdateRequest request) {
+        User user = getById(userId);
+
+        if(request.getRole() != null) {
+            Role role = roleRepository.findById(String.valueOf(request.getRole()))
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+            user.setRole(role);
+        }
+
+        userMapper.updateEmployee(user, request);
+
+        return userRepository.save(user);
     }
 }

@@ -20,20 +20,20 @@ import java.util.List;
 public class BookingScheduler {
     BookingRepository bookingRepository;
     @Scheduled(
-            cron = "0 01 12 * * *",
+            cron = "0 */3 * * * *",
             zone = "Asia/Ho_Chi_Minh"
     )
     @Transactional
     public void updateNoShowBookingsWithoutPayment(){
-        LocalDate today = LocalDate.now();
-        List<Booking> bookings = bookingRepository.findNoPaidNoShowBookings(today);
+        LocalDateTime expiredAt = LocalDateTime.now().minusMinutes(3);
+        List<Booking> bookings = bookingRepository.findNoPaidNoShowBookings(expiredAt);
         for (Booking booking : bookings) {
             booking.setStatus(BookingStatus.NO_SHOW);
         }
         bookingRepository.saveAll(bookings);
     }
     @Scheduled(
-            cron = "0 1 12 * * *",
+            cron = "0 */3 * * * *",
             zone = "Asia/Ho_Chi_Minh"
     )
     @Transactional

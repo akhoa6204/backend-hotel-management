@@ -43,8 +43,8 @@ public class Promotion {
     int quotaTotal;
     @Enumerated(EnumType.STRING)
     DiscountScope scope;
-    int minTotal;
-    int maxDiscountAmount;
+    BigDecimal minTotal;
+    BigDecimal maxDiscountAmount;
 
     @CreationTimestamp
     Date createdAt;

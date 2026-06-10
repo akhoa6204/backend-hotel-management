@@ -42,27 +42,34 @@ public enum ErrorCode {
     SERVICE_ALREADY_EXISTS(2101, "Service already exists", HttpStatus.CONFLICT),
     SERVICE_NOT_FOUND(2102, "Service not found", HttpStatus.NOT_FOUND),
 
-    INVALID_BOOKING_DATE(1902, "Check-out date must be after check-in date", HttpStatus.BAD_REQUEST),
+    INVALID_BOOKING_DATE(1901, "Check-out date must be after check-in date", HttpStatus.BAD_REQUEST),
     BOOKING_ALREADY_EXISTS(1902, "Room is already booked for selected dates", HttpStatus.BAD_REQUEST),
-    BOOKING_NOT_FOUND(1903, "Booking not found", HttpStatus.BAD_REQUEST),
+    BOOKING_NOT_FOUND(1903, "Booking not found", HttpStatus.NOT_FOUND),
 
     INVOICE_ALREADY_EXISTS(2101, "Invoice is already exists", HttpStatus.BAD_REQUEST),
-    INVOICE_NOT_FOUND(2102, "Invoice not found", HttpStatus.BAD_REQUEST),
+    INVOICE_NOT_FOUND(2102, "Invoice not found", HttpStatus.NOT_FOUND),
     INVOICE_ITEM_ALREADY_EXISTS(2103, "Invoice item is already exists", HttpStatus.BAD_REQUEST),
-    INVOICE_ITEM_NOT_FOUND(2104, "Invoice item not found", HttpStatus.BAD_REQUEST),
-    PAYMENT_NOT_FOUND(2105, "Payment not found", HttpStatus.BAD_REQUEST),
+    INVOICE_ITEM_NOT_FOUND(2104, "Invoice item not found", HttpStatus.NOT_FOUND),
+    PAYMENT_NOT_FOUND(2105, "Payment not found", HttpStatus.NOT_FOUND),
     PAYMENT_ALREADY_EXISTS(2106, "Payment is already exists", HttpStatus.BAD_REQUEST),
     INVOICE_NOT_FULLY_PAID(2107, "Invoice is not fully paid", HttpStatus.BAD_REQUEST),
     INVOICE_ALREADY_PAID(2108, "Invoice already paid", HttpStatus.BAD_REQUEST),
     PAYMENT_REQUIRED_TO_CONFIRM_BOOKING(2109, "Payment required to confirm booking", HttpStatus.BAD_REQUEST),
     ROOM_PAYMENT_REQUIRED_FOR_CHECKIN(2110, "Room payment required for check-in", HttpStatus.BAD_REQUEST),
     INVALID_BOOKING_STATUS(2111, "Invalid booking status", HttpStatus.BAD_REQUEST),
+    PAYMENT_NOT_TRANSFER(2112, "Payment is not bank transfer", HttpStatus.BAD_REQUEST),
+    PAYMENT_INVALID_STATUS(2113, "Payment status is invalid", HttpStatus.BAD_REQUEST),
+
+    HOUSEKEEPING_TASK_NOT_FOUND(2201, "Housekeeping task not found", HttpStatus.NOT_FOUND),
+    HOUSEKEEPING_TASK_ALREADY_EXISTS(2202, "Housekeeping task is already exists", HttpStatus.BAD_REQUEST),
+    INSPECTION_TASK_REQUIRED_FOR_CHECKOUT(2203, "Inspection task must be completed before checkout", HttpStatus.BAD_REQUEST),
 
     UNAUTHENTICATED(2001, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(2002, "You do not have permission", HttpStatus.FORBIDDEN),
     PERMISSION_NOT_FOUND(2003, "Permission not found", HttpStatus.NOT_FOUND),
     NAME_REQUIRED(2005, "Name is required", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(2004, "Role not found", HttpStatus.NOT_FOUND);
+
     private final int code;
     private final String message;
     private final HttpStatus httpStatus;

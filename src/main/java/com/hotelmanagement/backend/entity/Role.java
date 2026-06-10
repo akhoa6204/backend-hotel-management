@@ -10,7 +10,6 @@ import java.util.Set;
 @Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,6 +17,9 @@ public class Role {
     @Id
     String name;
     String description;
+
+    @OneToMany(mappedBy = "role")
+    Set<User> users;
 
     @ManyToMany
     Set<Permisson> permissions;

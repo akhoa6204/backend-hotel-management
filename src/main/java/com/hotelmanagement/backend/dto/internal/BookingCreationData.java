@@ -21,7 +21,7 @@ public class BookingCreationData {
     LocalDate checkInDate;
     LocalDate checkOutDate;
     LocalTime estimatedArrivalTime;
-    boolean bookingForSomeoneElse;
+    Boolean bookingForSomeoneElse;
     String guestName;
     String guestPhone;
     String guestEmail;

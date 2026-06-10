@@ -14,16 +14,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ExtraServiceUpdateRequest {
-    @NotBlank
     String name;
 
-    @NotBlank
     String description;
 
-    @NotBlank
-    @Size(min = 1)
     BigDecimal basePrice;
 
-    @NotBlank
     ServiceType type;
 }

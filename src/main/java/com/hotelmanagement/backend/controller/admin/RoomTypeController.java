@@ -5,6 +5,8 @@ import com.hotelmanagement.backend.dto.request.RoomTypeUpdateRequest;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.RoomTypeResponse;
+import com.hotelmanagement.backend.mapper.RoomMapper;
+import com.hotelmanagement.backend.mapper.RoomTypeMapper;
 import com.hotelmanagement.backend.service.RoomTypeService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -25,6 +27,7 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class RoomTypeController {
     RoomTypeService roomTypeService;
+    RoomTypeMapper roomTypeMapper;
 
     @PostMapping("")
     public ApiResponse<RoomTypeResponse> createRoomType(@RequestBody @Valid RoomTypeCreationRequest request) {
@@ -35,7 +38,7 @@ public class RoomTypeController {
 
     @GetMapping("/{id}")
     public ApiResponse<RoomTypeResponse> getById(@PathVariable Long id) {
-        RoomTypeResponse roomTypeResponse = roomTypeService.getRoomType(id);
+        RoomTypeResponse roomTypeResponse = roomTypeMapper.toRoomTypeResponse(roomTypeService.getRoomType(id));
 
         return ApiResponse.<RoomTypeResponse>builder().data(roomTypeResponse).build();
     }

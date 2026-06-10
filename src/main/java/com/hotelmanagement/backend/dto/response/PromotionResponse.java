@@ -32,7 +32,7 @@ public class PromotionResponse {
     int quotaUsed;
     int quotaTotal;
     DiscountScope scope;
-    int minTotal;
-    int maxDiscountAmount;
+    BigDecimal minTotal;
+    BigDecimal maxDiscountAmount;
     boolean autoApplied;
 }

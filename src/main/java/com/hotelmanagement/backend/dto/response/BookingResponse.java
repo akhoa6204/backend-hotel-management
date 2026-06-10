@@ -26,6 +26,7 @@ public class BookingResponse {
     String invoiceId;
     RoomShortResponse room;
     UserShortResponse staff;
+    UserShortResponse customer ;
     LocalDate checkInDate;
     LocalDate checkOutDate;
     LocalTime estimatedArrivalTime;
@@ -35,4 +36,7 @@ public class BookingResponse {
     String guestPhone;
     String guestEmail;
     boolean refundable;
+
+    boolean inspected;
+    Long inspectionTaskId;
 }

@@ -1,33 +1,20 @@
 package com.hotelmanagement.backend.service;
 
 import com.hotelmanagement.backend.Utils.DateUtils;
-import com.hotelmanagement.backend.dto.internal.PricingResult;
-import com.hotelmanagement.backend.dto.request.BookingCreationRequest;
-import com.hotelmanagement.backend.dto.request.CreateRoleRequest;
-import com.hotelmanagement.backend.dto.response.RoleResponse;
-import com.hotelmanagement.backend.entity.Permisson;
+import com.hotelmanagement.backend.dto.response.PricingResultResponse;
+import com.hotelmanagement.backend.dto.request.QuoteRequest;
 import com.hotelmanagement.backend.entity.Promotion;
 import com.hotelmanagement.backend.entity.Room;
 import com.hotelmanagement.backend.enums.DiscountType;
-import com.hotelmanagement.backend.enums.ErrorCode;
-import com.hotelmanagement.backend.exception.AppException;
-import com.hotelmanagement.backend.mapper.RoleMapper;
-import com.hotelmanagement.backend.repository.PermissionRepository;
-import com.hotelmanagement.backend.repository.PromotionRepository;
-import com.hotelmanagement.backend.repository.RoleRepository;
+import com.hotelmanagement.backend.mapper.PromotionMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Optional;
 
 
 @Service
@@ -36,13 +23,16 @@ import java.util.Optional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PricingService {
     PromotionService promotionService;
-
-    public PricingResult calculateBookingPrice(
-            BookingCreationRequest request,
-            Room room
+    RoomService roomService;
+    PromotionMapper promotionMapper;
+    public PricingResultResponse calculateBookingPrice(
+            QuoteRequest request
     ) {
-
-        long nights = DateUtils.computeNight(request.getCheckInDate(), request.getCheckOutDate());
+        Room room = roomService.findRoomAvailable(
+                request.getRoomId(),
+                request.getStartDate(),
+                request.getEndDate());
+        long nights = DateUtils.computeNight(request.getStartDate(), request.getEndDate());
         BigDecimal basePrice = room.getRoomType().getBasePrice();
         BigDecimal subtotal = basePrice.multiply(BigDecimal.valueOf(nights));
         Promotion promotion = null;
@@ -76,15 +66,16 @@ public class PricingService {
         totalDiscount = totalDiscount.min(subtotal);
         BigDecimal finalTotal = subtotal.subtract(totalDiscount);
 
-        return PricingResult.builder()
+        return PricingResultResponse.builder()
                 .nights(nights)
+                .basePrice(basePrice)
                 .subtotal(subtotal)
                 .autoDiscount(autoPromotionDiscount)
                 .totalDiscount(totalDiscount)
                 .finalTotal(finalTotal)
                 .promotionDiscount(promotionDiscount)
-                .autoPromotion(autoPromotion)
-                .promotion(promotion)
+                .autoPromotion(promotionMapper.toPromotionResponse(autoPromotion))
+                .promotion(promotionMapper.toPromotionResponse(promotion))
                 .build();
     }
 
@@ -99,10 +90,8 @@ public class PricingService {
             discount = promotion.getDiscountValue();
         }
 
-        if (promotion.getMaxDiscountAmount() > 0) {
-            discount = discount.min(
-                    BigDecimal.valueOf(promotion.getMaxDiscountAmount())
-            );
+        if (promotion.getMaxDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
+            discount = discount.min(promotion.getMaxDiscountAmount());
 
         }
         return discount.setScale(2, RoundingMode.HALF_UP);

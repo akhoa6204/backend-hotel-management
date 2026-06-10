@@ -1,6 +1,8 @@
 package com.hotelmanagement.backend.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,7 +20,8 @@ import java.util.Date;
 @Builder
 public class Amenity {
     @Id
-    String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
     String label;
 
     @CreationTimestamp

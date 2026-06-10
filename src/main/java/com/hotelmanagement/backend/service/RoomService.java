@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -27,6 +28,8 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RoomService {
     RoomRepository roomRepository;
+
+    RoomTypeService roomTypeService;
     RoomTypeRepository roomTypeRepository;
 
     RoomMapper roomMapper;
@@ -79,12 +82,17 @@ public class RoomService {
         Room room = roomRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
 
-        if (roomRepository.existsByNameAndActiveTrue(request.getName())) {
+        if (!Objects.equals(room.getName(), request.getName()) &&
+                roomRepository.existsByNameAndActiveTrue(request.getName())) {
             throw new AppException(ErrorCode.ROOM_ALREADY_EXISTS);
         }
 
         roomMapper.updateRoom(room, request);
 
+        if(request.getRoomTypeId() != null){
+            RoomType roomType = roomTypeService.getRoomType(request.getRoomTypeId());
+            room.setRoomType(roomType);
+        }
 
         return roomRepository.save(room);
 

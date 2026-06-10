@@ -1,4 +1,4 @@
-package com.hotelmanagement.backend.dto.internal;
+package com.hotelmanagement.backend.dto.response;
 
 import com.hotelmanagement.backend.entity.Promotion;
 import lombok.*;
@@ -12,8 +12,10 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PricingResult {
+public class PricingResultResponse {
     long nights;
+
+    BigDecimal basePrice;
 
     BigDecimal subtotal;
 
@@ -21,11 +23,11 @@ public class PricingResult {
 
     BigDecimal finalTotal;
 
-    Promotion promotion;
+    PromotionResponse promotion;
 
     BigDecimal promotionDiscount;
 
-    Promotion autoPromotion;
+    PromotionResponse autoPromotion;
 
     BigDecimal autoDiscount;
 }

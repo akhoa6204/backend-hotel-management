@@ -37,6 +37,7 @@ public class AuthenticationController {
                 .data(AuthenticationResponse.builder()
                         .authenticated(result.isAuthenticated())
                         .token(result.getToken())
+                        .user(result.getUser())
                         .build())
                 .build();
     }

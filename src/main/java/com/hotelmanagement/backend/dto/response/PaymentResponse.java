@@ -34,4 +34,5 @@ public class PaymentResponse {
     BigDecimal amount;
     String transactionCode;
     LocalDateTime paidAt;
+    LocalDateTime expiredAt;
 }

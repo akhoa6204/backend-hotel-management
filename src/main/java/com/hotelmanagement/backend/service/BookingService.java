@@ -1,11 +1,11 @@
 package com.hotelmanagement.backend.service;
 
-import com.hotelmanagement.backend.Utils.DateUtils;
 import com.hotelmanagement.backend.dto.internal.*;
-import com.hotelmanagement.backend.dto.request.BookingCreationRequest;
-import com.hotelmanagement.backend.dto.request.BookingUpdateRequest;
-import com.hotelmanagement.backend.dto.request.RoomUpdateRequest;
+import com.hotelmanagement.backend.dto.request.*;
+import com.hotelmanagement.backend.dto.response.BookingCreationResponse;
 import com.hotelmanagement.backend.dto.response.BookingResponse;
+import com.hotelmanagement.backend.dto.response.PricingResultResponse;
+import com.hotelmanagement.backend.dto.response.PromotionResponse;
 import com.hotelmanagement.backend.entity.*;
 import com.hotelmanagement.backend.enums.*;
 import com.hotelmanagement.backend.exception.AppException;
@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -38,9 +39,10 @@ public class BookingService {
     InvoiceItemService invoiceItemService;
     PricingService pricingService;
     InvoicePromotionService invoicePromotionService;
+    HousekeepingTaskService housekeepingTaskService;
 
     @Transactional(rollbackFor = Exception.class)
-    public Booking create(BookingCreationRequest request) {
+    public BookingCreationResponse create(BookingCreationRequest request) {
 
         validateBooking(request);
 
@@ -54,7 +56,13 @@ public class BookingService {
 
         Room room = roomService.findRoomAvailable(request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate());
 
-        PricingResult pricing = pricingService.calculateBookingPrice(request, room);
+        QuoteRequest quoteRequest = QuoteRequest.builder()
+                .roomId(request.getRoomId())
+                .endDate(request.getCheckOutDate())
+                .startDate(request.getCheckInDate())
+                .promotionCode(request.getPromotionCode())
+                .build();
+        PricingResultResponse pricing = pricingService.calculateBookingPrice(quoteRequest);
 
         BookingCreationData bookingCreationData = BookingCreationData.builder()
                 .room(room)
@@ -63,7 +71,7 @@ public class BookingService {
                 .checkInDate(request.getCheckInDate())
                 .checkOutDate(request.getCheckOutDate())
                 .estimatedArrivalTime(request.getEstimatedArrivalTime())
-                .bookingForSomeoneElse(request.isBookingForSomeoneElse())
+                .bookingForSomeoneElse(request.getBookingForSomeoneElse())
                 .guestName(request.getGuestName())
                 .guestPhone(request.getGuestPhone())
                 .guestEmail(request.getGuestEmail())
@@ -95,7 +103,7 @@ public class BookingService {
 
         invoiceService.reCalculate(savedInvoice);
 
-        Promotion manualPromotion = pricing.getPromotion();
+        PromotionResponse manualPromotion = pricing.getPromotion();
         if( manualPromotion != null ) {
             InvoicePromotionCreationData invoiceManualPromotionCreationData = InvoicePromotionCreationData.builder()
                     .invoice(savedInvoice)
@@ -109,7 +117,7 @@ public class BookingService {
             invoicePromotionService.create(invoiceManualPromotionCreationData);
         }
 
-        Promotion autoPromotion = pricing.getAutoPromotion();
+        PromotionResponse autoPromotion = pricing.getAutoPromotion();
         if( autoPromotion != null ) {
             InvoicePromotionCreationData invoiceAutoPromotionCreationData = InvoicePromotionCreationData.builder()
                     .invoice(savedInvoice)
@@ -124,7 +132,12 @@ public class BookingService {
         }
 
         invoiceService.reCalculate(savedInvoice);
-        return savedBooking;
+        BookingCreationResponse response = BookingCreationResponse.builder()
+                .invoiceId(savedInvoice.getId())
+                .bookingId(savedBooking.getId())
+                .remainingAmount(savedInvoice.getRemainingAmount())
+                .build();
+        return response;
     }
 
     public Page<Booking> getList(
@@ -134,10 +147,33 @@ public class BookingService {
         return bookingRepository.getItemsWithParams(q, request);
     }
 
-    public Booking getByid (String id){
-        Booking booking = bookingRepository.findByIdAndStatusNot(id, BookingStatus.NO_SHOW)
+    public Booking getEntityById(String id) {
+        return bookingRepository.findByIdAndStatusNot(id, BookingStatus.NO_SHOW)
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
-        return booking;
+    }
+
+    public BookingResponse getByid(String id) {
+        Booking booking = getEntityById(id);
+
+        BookingResponse response = bookingMapper.toBookingResponse(booking);
+
+        Optional<HousekeepingTask> inspectionTaskOpt =
+                housekeepingTaskService.findInspectionTaskByBookingId(id);
+
+        if (inspectionTaskOpt.isPresent()) {
+            HousekeepingTask inspectionTask = inspectionTaskOpt.get();
+
+            response.setInspectionTaskId(inspectionTask.getId());
+
+            response.setInspected(
+                    inspectionTask.getStatus() == HousekeepingTaskStatus.COMPLETED
+            );
+        } else {
+            response.setInspectionTaskId(null);
+            response.setInspected(false);
+        }
+
+        return response;
     }
 
     private Booking createEntityBooking(BookingCreationData request){
@@ -169,7 +205,7 @@ public class BookingService {
     }
 
     public Booking updateBooking(String id, BookingUpdateRequest request) {
-        Booking booking = getByid(id);
+        Booking booking = getEntityById(id);
         if (booking.getStatus() == BookingStatus.CHECKED_OUT) {
             throw new AppException(ErrorCode.INVALID_BOOKING_STATUS);
         }
@@ -195,6 +231,13 @@ public class BookingService {
 
             roomService.updateRoom(booking.getRoom().getId(), oldRoomUpdateRequest);
 
+            HousekeepingTaskCreationRequest task = HousekeepingTaskCreationRequest.builder()
+                    .roomId(booking.getRoom().getId())
+                    .type(HousekeepingTaskType.CLEANING)
+                    .build();
+
+            housekeepingTaskService.createTask(task);
+
             RoomUpdateRequest newRoomUpdateRequest = RoomUpdateRequest.builder()
                     .status(RoomStatus.OCCUPIED_CLEAN)
                     .build();
@@ -209,9 +252,9 @@ public class BookingService {
 
         return booking;
     }
-
+    @Transactional
     public Booking confirmBooking(String id){
-        Booking  booking = getByid(id);
+        Booking  booking = getEntityById(id);
         Invoice invoice = booking.getInvoice();
         Set<Payment> payments = invoice.getPayments();
         if (booking.getStatus() != BookingStatus.PENDING) {
@@ -231,17 +274,24 @@ public class BookingService {
     }
 
     public Booking cancelBooking(String id) {
-        Booking booking = getByid(id);
+        Booking booking = getEntityById(id);
         Invoice invoice = booking.getInvoice();
         booking.setStatus(BookingStatus.CANCELLED);
         invoice.setStatus(InvoiceStatus.CANCELLED);
         return bookingRepository.save(booking);
     }
+    @Transactional
     public Booking checkoutBooking(String id){
-        Booking booking = getByid(id);
+        Booking booking = getEntityById(id);
 
         if (booking.getStatus() != BookingStatus.CHECKED_IN) {
             throw new AppException(ErrorCode.INVALID_BOOKING_STATUS);
+        }
+
+        boolean hasCompletedInspectionTask = housekeepingTaskService.hasCompletedInspectionTask(id);
+
+        if(!hasCompletedInspectionTask) {
+            throw new AppException(ErrorCode.INSPECTION_TASK_REQUIRED_FOR_CHECKOUT);
         }
 
         Invoice invoice = booking.getInvoice();
@@ -270,10 +320,19 @@ public class BookingService {
 
         roomService.updateRoom(booking.getRoom().getId(), roomUpdateRequest);
 
+        HousekeepingTaskCreationRequest task = HousekeepingTaskCreationRequest.builder()
+                .bookingId(id)
+                .roomId(booking.getRoom().getId())
+                .type(HousekeepingTaskType.CLEANING)
+                .build();
+
+        housekeepingTaskService.createTask(task);
+
         return bookingRepository.save(booking);
     }
+    @Transactional
     public Booking checkinBooking(String id){
-        Booking booking = getByid(id);
+        Booking booking = getEntityById(id);
         if (booking.getStatus() != BookingStatus.CONFIRMED) {
             throw new AppException(ErrorCode.INVALID_BOOKING_STATUS);
         }
@@ -322,4 +381,9 @@ public class BookingService {
 
         return bookingRepository.save(booking);
     }
+
+    public PricingResultResponse quote(QuoteRequest request){
+        return pricingService.calculateBookingPrice(request);
+    }
+
 }

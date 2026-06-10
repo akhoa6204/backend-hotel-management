@@ -71,9 +71,6 @@ public class ExtraServiceService {
         ExtraService extraService = extraServiceRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_FOUND));
 
-        if (extraServiceRepository.existsByNameAndActiveTrue(request.getName())) {
-            throw new AppException(ErrorCode.SERVICE_ALREADY_EXISTS);
-        }
 
         extraServiceMapper.updateService(extraService, request);
 
