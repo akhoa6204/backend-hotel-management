@@ -10,7 +10,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -26,4 +30,19 @@ public interface InvoiceRepository extends JpaRepository<Invoice,String> {
             "payments"
     })
     Optional<Invoice> findDetailById(String id);
+
+    @Query("""
+        select coalesce(
+            sum(i.subtotal - i.discountAmount),
+            0
+        )
+        from Invoice i
+        where i.status = com.hotelmanagement.backend.enums.InvoiceStatus.DONE
+            and i.paidAt between :start and :end
+    """)
+    BigDecimal getRevenueBetween(
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
 }

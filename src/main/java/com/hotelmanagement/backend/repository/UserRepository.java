@@ -4,6 +4,7 @@ import com.hotelmanagement.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,5 +38,17 @@ public interface UserRepository extends JpaRepository<User,String> {
 
     List<User> findByRole_NameInAndActiveTrue(
             List<String> roles
+    );
+
+    @Query("""
+        SELECT COUNT(u)
+        FROM User u
+        WHERE u.role.name = :role
+            AND u.createdAt BETWEEN :start AND :end
+    """)
+    long countNewCustomers(
+            @Param("role") String role,
+            @Param("start") Date start,
+            @Param("end") Date end
     );
 }

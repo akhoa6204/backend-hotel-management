@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -308,11 +309,11 @@ public class BookingService {
         if (totalPaidAmount.compareTo(finalTotal) < 0) {
             throw new AppException(ErrorCode.INVOICE_NOT_FULLY_PAID);
         }
-
+        LocalDateTime now  = LocalDateTime.now();
         booking.setStatus(BookingStatus.CHECKED_OUT);
         invoice.setStatus(InvoiceStatus.DONE);
         invoice.setRemainingAmount(BigDecimal.ZERO);
-
+        invoice.setPaidAt(now);
         RoomUpdateRequest roomUpdateRequest =
                 RoomUpdateRequest.builder()
                         .status(RoomStatus.VACANT_DIRTY)

@@ -76,4 +76,25 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query("""
+        SELECT COUNT(r)
+        FROM Room r
+        WHERE r.active = true
+            AND NOT EXISTS (
+                SELECT b.id
+                FROM Booking b
+                WHERE b.room.id = r.id
+                    AND b.checkInDate <= :endDate
+                    AND b.checkOutDate >= :startDate
+                    AND b.status NOT IN (
+                        com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
+                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT
+                    )
+            )
+    """)
+    long countAvailableRoomsBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

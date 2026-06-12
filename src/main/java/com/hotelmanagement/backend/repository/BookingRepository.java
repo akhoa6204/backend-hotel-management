@@ -94,4 +94,51 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
     List<Booking> findNoPaidNoShowBookings(
             @Param("expiredAt") LocalDateTime expiredAt
     );
+
+    @Query("""
+        select count(b)
+        from Booking b
+        where b.checkInDate = :date
+    """)
+    long countTodayBookings(LocalDate date);
+
+    Page<Booking> findByCheckInDate(
+            LocalDate date,
+            Pageable pageable
+    );
+
+    Page<Booking> findByCheckOutDate(LocalDate date, Pageable pageable);
+
+    @Query("""
+        SELECT COUNT(DISTINCT b.room.id)
+        FROM Booking b
+        WHERE b.checkInDate <= :endDate
+            AND b.checkOutDate >= :startDate
+            AND b.status NOT IN (
+                com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
+                com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT,
+                com.hotelmanagement.backend.enums.BookingStatus.NO_SHOW
+            )
+    """)
+    long countOccupiedRoomsBetween(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    long countByCheckInDateGreaterThanEqualAndCheckInDateLessThan(
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    long countByCheckInDateGreaterThanEqualAndCheckInDateLessThanAndStatusIn(
+            LocalDate startDate,
+            LocalDate endDate,
+            List<BookingStatus> statuses
+    );
+
+    long countByCheckInDateGreaterThanEqualAndCheckInDateLessThanAndStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            BookingStatus status
+    );
 }
