@@ -14,6 +14,8 @@ import com.hotelmanagement.backend.repository.RoomRepository;
 import com.hotelmanagement.backend.repository.RoomTypeRepository;
 import com.hotelmanagement.backend.repository.PromotionRepository;
 import com.hotelmanagement.backend.repository.ExtraServiceRepository;
+import com.hotelmanagement.backend.repository.ShiftRepository;
+import com.hotelmanagement.backend.repository.StaffShiftAssignmentRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,6 +29,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.HashSet;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import com.hotelmanagement.backend.enums.StaffPosition;
 
 @Slf4j
 @Configuration
@@ -51,7 +55,9 @@ public class ApplicationInitConfig {
             RoomTypeRepository roomTypeRepository,
             RoomRepository roomRepository,
             PromotionRepository promotionRepository,
-            ExtraServiceRepository extraServiceRepository
+            ExtraServiceRepository extraServiceRepository,
+            ShiftRepository shiftRepository,
+            StaffShiftAssignmentRepository staffShiftAssignmentRepository
     ) {
 
         return args -> {
@@ -413,6 +419,78 @@ public class ApplicationInitConfig {
                     .build();
 
             userRepository.save(normalUser);
+
+            Shift morningShift = shiftRepository.save(
+                    Shift.builder()
+                            .code("MORNING")
+                            .name("Ca sáng")
+                            .startTime(LocalTime.of(6, 0))
+                            .endTime(LocalTime.of(14, 0))
+                            .build()
+            );
+
+            Shift afternoonShift = shiftRepository.save(
+                    Shift.builder()
+                            .code("AFTERNOON")
+                            .name("Ca chiều")
+                            .startTime(LocalTime.of(14, 0))
+                            .endTime(LocalTime.of(22, 0))
+                            .build()
+            );
+
+            Shift nightShift = shiftRepository.save(
+                    Shift.builder()
+                            .code("NIGHT")
+                            .name("Ca tối")
+                            .startTime(LocalTime.of(22, 0))
+                            .endTime(LocalTime.of(6, 0))
+                            .build()
+            );
+
+            Shift officeShift = shiftRepository.save(
+                    Shift.builder()
+                            .code("OFFICE")
+                            .name("Ca hành chính")
+                            .startTime(LocalTime.of(8, 0))
+                            .endTime(LocalTime.of(17, 0))
+                            .build()
+            );
+
+            staffShiftAssignmentRepository.save(
+                    StaffShiftAssignment.builder()
+                            .staff(housekeepingUser)
+                            .shift(morningShift)
+                            .workDate(LocalDate.now())
+                            .position(StaffPosition.HOUSEKEEPING)
+                            .build()
+            );
+
+            staffShiftAssignmentRepository.save(
+                    StaffShiftAssignment.builder()
+                            .staff(housekeepingUser)
+                            .shift(afternoonShift)
+                            .workDate(LocalDate.now().plusDays(1))
+                            .position(StaffPosition.HOUSEKEEPING)
+                            .build()
+            );
+
+            staffShiftAssignmentRepository.save(
+                    StaffShiftAssignment.builder()
+                            .staff(receptionistUser)
+                            .shift(officeShift)
+                            .workDate(LocalDate.now())
+                            .position(StaffPosition.RECEPTION)
+                            .build()
+            );
+
+            staffShiftAssignmentRepository.save(
+                    StaffShiftAssignment.builder()
+                            .staff(receptionistUser)
+                            .shift(nightShift)
+                            .workDate(LocalDate.now().plusDays(1))
+                            .position(StaffPosition.RECEPTION)
+                            .build()
+            );
 
             log.warn("Application sample seed data initialized successfully");
         };

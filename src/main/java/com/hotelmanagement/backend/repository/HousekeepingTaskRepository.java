@@ -45,7 +45,19 @@ public interface HousekeepingTaskRepository extends JpaRepository<HousekeepingTa
             HousekeepingTaskStatus status
     );
 
+    boolean existsByRoomIdAndTypeAndBookingIdAndStatusNot(
+            Long roomId,
+            HousekeepingTaskType type,
+            String bookingId,
+            HousekeepingTaskStatus status
+    );
+
     boolean existsByBookingIdAndTypeAndStatus(String bookingId, HousekeepingTaskType type, HousekeepingTaskStatus status);
 
     Optional<HousekeepingTask> findFirstByBookingIdAndType(String bookingId, HousekeepingTaskType type);
+
+    long countByStaffIdAndStatusNot(
+            String staffId,
+            HousekeepingTaskStatus status
+    );
 }

@@ -28,7 +28,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import com.hotelmanagement.backend.entity.StaffShiftAssignment;
+import com.hotelmanagement.backend.enums.StaffPosition;
+import com.hotelmanagement.backend.repository.StaffShiftAssignmentRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,6 +45,7 @@ import java.util.Optional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class HousekeepingTaskService {
     HousekeepingTaskRepository housekeepingTaskRepository;
+    StaffShiftAssignmentRepository staffShiftAssignmentRepository;
     HousekeepingTaskMapper housekeepingTaskMapper;
 
     RoomService roomService;
@@ -52,16 +60,24 @@ public class HousekeepingTaskService {
 
         Room room = roomService.getByid(request.getRoomId());
 
-        boolean hasStaff = request.getStaffId() != null;
-        User staff = hasStaff ? userService.getById(request.getStaffId()) : null;
+        boolean hasStaff = request.getStaffId() != null && !request.getStaffId().isBlank();
+        User staff = hasStaff ? userService.getById(request.getStaffId()) : findAvailableHousekeepingStaff();
 
         housekeepingTask.setRoom(room);
         housekeepingTask.setStaff(staff);
 
         housekeepingTask.setStatus(HousekeepingTaskStatus.PENDING);
 
-        boolean existed = housekeepingTaskRepository
-                .existsByRoomIdAndTypeAndStatusNot(
+        boolean hasBookingId = request.getBookingId() != null && !request.getBookingId().isBlank();
+
+        boolean existed = hasBookingId
+                ? housekeepingTaskRepository.existsByRoomIdAndTypeAndBookingIdAndStatusNot(
+                        request.getRoomId(),
+                        request.getType(),
+                        request.getBookingId(),
+                        HousekeepingTaskStatus.COMPLETED
+                )
+                : housekeepingTaskRepository.existsByRoomIdAndTypeAndStatusNot(
                         request.getRoomId(),
                         request.getType(),
                         HousekeepingTaskStatus.COMPLETED
@@ -74,6 +90,29 @@ public class HousekeepingTaskService {
         }
 
         return housekeepingTaskRepository.save(housekeepingTask);
+    }
+
+    private User findAvailableHousekeepingStaff() {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        List<StaffShiftAssignment> assignments = staffShiftAssignmentRepository
+                .findByWorkDateAndPositionAndShift_StartTimeLessThanEqualAndShift_EndTimeGreaterThanEqual(
+                        today,
+                        StaffPosition.HOUSEKEEPING,
+                        now,
+                        now
+                );
+
+        return assignments.stream()
+                .map(StaffShiftAssignment::getStaff)
+                .distinct()
+                .min(Comparator.comparingLong(staff -> housekeepingTaskRepository
+                        .countByStaffIdAndStatusNot(
+                                staff.getId(),
+                                HousekeepingTaskStatus.COMPLETED
+                        )))
+                .orElse(null);
     }
 
     public HousekeepingTask getByTaskId(Long id){

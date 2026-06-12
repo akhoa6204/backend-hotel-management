@@ -14,7 +14,6 @@ import java.util.Set;
 @Setter
 @Entity
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

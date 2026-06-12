@@ -12,6 +12,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 @Getter
 @Setter
@@ -25,6 +26,8 @@ public class HousekeepingTaskResponse {
     RoomShortResponse room;
     UserShortResponse staff;
     String bookingId;
+    Date createdAt;
+    Date updatedAt;
     LocalDateTime startedAt;
     LocalDateTime completedAt;
     HousekeepingTaskType type;

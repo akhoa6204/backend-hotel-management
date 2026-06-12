@@ -4,6 +4,7 @@ import com.hotelmanagement.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -32,5 +33,9 @@ public interface UserRepository extends JpaRepository<User,String> {
     Page<User> findEmployeesByRole(
             @Param("role") String role,
             Pageable pageable
+    );
+
+    List<User> findByRole_NameInAndActiveTrue(
+            List<String> roles
     );
 }
