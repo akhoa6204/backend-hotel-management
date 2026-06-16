@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Optional;
 
 @Repository
@@ -67,7 +68,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                     AND b.checkOutDate >= :startDate
                     AND b.status NOT IN (
                         com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
-                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT
+                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT,
+                        com.hotelmanagement.backend.enums.BookingStatus.NO_SHOW
                     )
             )
        """)
@@ -89,12 +91,39 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                     AND b.checkOutDate >= :startDate
                     AND b.status NOT IN (
                         com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
-                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT
+                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT,
+                        com.hotelmanagement.backend.enums.BookingStatus.NO_SHOW
                     )
             )
     """)
     long countAvailableRoomsBetween(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
+    );
+
+    @Query(value = """
+        SELECT r.id
+        FROM room r
+        JOIN roomType rt ON rt.id = r.roomTypeId
+        WHERE rt.id = :roomTypeId
+          AND rt.active = true
+          AND rt.capacity >= :capacity
+          AND NOT EXISTS (
+              SELECT 1
+              FROM booking b
+              WHERE b.roomId = r.id
+                AND b.status IN (:bookingStatuses)
+                AND b.checkInDate < :endDate
+                AND b.checkOutDate > :startDate
+          )
+        ORDER BY r.id ASC
+        LIMIT 1
+    """, nativeQuery = true)
+    Optional<Long> findFirstAvailableRoomIdByRoomType(
+            @Param("roomTypeId") Long roomTypeId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("capacity") Integer capacity,
+            @Param("bookingStatuses") Collection<String> bookingStatuses
     );
 }

@@ -22,8 +22,18 @@ public interface UserRepository extends JpaRepository<User,String> {
             SELECT u
             FROM User u
             WHERE u.role.name <> 'USER'
+              AND (
+                    :q IS NULL
+                    OR :q = ''
+                    OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :q, '%'))
+                    OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
+                    OR u.phone LIKE CONCAT('%', :q, '%')
+              )
             """)
-    Page<User> findEmployees(Pageable pageable);
+    Page<User> findEmployees(
+            @Param("q") String q,
+            Pageable pageable
+    );
 
     @Query("""
             SELECT u

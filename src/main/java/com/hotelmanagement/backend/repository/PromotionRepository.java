@@ -67,4 +67,19 @@ public interface PromotionRepository extends JpaRepository<Promotion,Long> {
             @Param("today") LocalDate today
     );
 
+    @Query("""
+        SELECT p
+        FROM Promotion p
+        WHERE p.active = true
+          AND p.autoApplied = true
+          AND p.startDate <= :endDate
+          AND p.endDate >= :startDate
+          AND (p.quotaTotal = 0 OR p.quotaUsed < p.quotaTotal)
+        ORDER BY p.priority ASC
+    """)
+    List<Promotion> findValidAutoPromotions(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
 }

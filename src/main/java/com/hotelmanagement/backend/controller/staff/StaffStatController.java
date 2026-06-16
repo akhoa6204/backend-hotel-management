@@ -1,8 +1,7 @@
-package com.hotelmanagement.backend.controller.admin;
+package com.hotelmanagement.backend.controller.staff;
 
 import com.hotelmanagement.backend.dto.response.*;
 import com.hotelmanagement.backend.service.StatService;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,17 +11,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/stats")
+@RequestMapping("/staff/stats")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class StatController {
+public class StaffStatController {
 
     StatService statService;
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')")
     @GetMapping("/overview")
     public ApiResponse<StatsOverviewResponse> getOverview() {
         return ApiResponse.<StatsOverviewResponse>builder()
@@ -30,6 +31,7 @@ public class StatController {
                 .build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')")
     @GetMapping("/checkins")
     public ApiResponse<List<BookingResponse>> getCheckins(
             @RequestParam(defaultValue = "1") int page,
@@ -52,6 +54,7 @@ public class StatController {
                 .build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')")
     @GetMapping("/checkouts")
     public ApiResponse<List<BookingResponse>> getCheckouts(
             @RequestParam(defaultValue = "1") int page,
@@ -74,6 +77,7 @@ public class StatController {
                 .build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @GetMapping("/occupancy")
     public ApiResponse<RevenueOccupancyStatsResponse> getOccupancy() {
         return ApiResponse.<RevenueOccupancyStatsResponse>builder()
@@ -81,6 +85,7 @@ public class StatController {
                 .build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @GetMapping("/revenue")
     public ApiResponse<MonthlyRevenueResponse> getRevenue() {
         return ApiResponse.<MonthlyRevenueResponse>builder()
@@ -88,6 +93,7 @@ public class StatController {
                 .build();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @GetMapping("/bookings")
     public ApiResponse<MonthlyBookingStatsResponse> getBookingStats(
             @RequestParam(required = false) String month

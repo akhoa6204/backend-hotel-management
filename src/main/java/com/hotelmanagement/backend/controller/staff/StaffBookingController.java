@@ -1,7 +1,9 @@
-package com.hotelmanagement.backend.controller.common;
+package com.hotelmanagement.backend.controller.staff;
 
-import com.hotelmanagement.backend.dto.response.PricingResultResponse;
-import com.hotelmanagement.backend.dto.request.*;
+import com.hotelmanagement.backend.dto.request.BookingCancelRequest;
+import com.hotelmanagement.backend.dto.request.BookingCreationRequest;
+import com.hotelmanagement.backend.dto.request.BookingUpdateRequest;
+import com.hotelmanagement.backend.dto.request.QuoteRequest;
 import com.hotelmanagement.backend.dto.response.*;
 import com.hotelmanagement.backend.mapper.BookingMapper;
 import com.hotelmanagement.backend.service.BookingService;
@@ -11,29 +13,32 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/bookings")
+@RequestMapping("/staff/bookings")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class BookingController {
+public class StaffBookingController {
     BookingService bookingService;
     BookingMapper bookingMapper;
     @PostMapping("")
-    ApiResponse<BookingCreationResponse> create(@RequestBody @Valid BookingCreationRequest request) {
-        BookingCreationResponse result = bookingService.create(request);
+    @PreAuthorize("hasAuthority('BOOKING_CREATE')")
+    ApiResponse<BookingResponse> create(@RequestBody @Valid BookingCreationRequest request) {
+        BookingResponse result = bookingService.create(request);
 
-        return ApiResponse.<BookingCreationResponse>builder()
+        return ApiResponse.<BookingResponse>builder()
                 .data(result)
                 .build();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
     ApiResponse<BookingResponse> getById(@PathVariable String id) {
-        BookingResponse result = bookingService.getByid(id);
+        BookingResponse result = bookingService.getById(id);
 
         return ApiResponse.<BookingResponse>builder()
                 .data(result)
@@ -41,6 +46,7 @@ public class BookingController {
     }
 
     @GetMapping("")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
     ApiResponse<List<BookingResponse>> getList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
@@ -66,6 +72,7 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
     ApiResponse<BookingResponse> updateRoom(@PathVariable String id, @RequestBody BookingUpdateRequest request) {
         BookingResponse result = bookingMapper.toBookingResponse(bookingService.updateBooking(id ,request));
         return ApiResponse.<BookingResponse>builder()
@@ -74,6 +81,7 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}/confirm")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
     ApiResponse<BookingResponse> confirmBooking(@PathVariable String id) {
         BookingResponse result = bookingMapper.toBookingResponse(bookingService.confirmBooking(id));
         return ApiResponse.<BookingResponse>builder()
@@ -82,6 +90,7 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}/checkin")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
     ApiResponse<BookingResponse> checkinBooking(@PathVariable String id) {
         BookingResponse result = bookingMapper.toBookingResponse(bookingService.checkinBooking(id));
         return ApiResponse.<BookingResponse>builder()
@@ -90,6 +99,7 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}/checkout")
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
     ApiResponse<BookingResponse> checkoutBooking(@PathVariable String id) {
         BookingResponse result = bookingMapper.toBookingResponse(bookingService.checkoutBooking(id));
         return ApiResponse.<BookingResponse>builder()
@@ -98,14 +108,16 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}/cancelled")
-    ApiResponse<BookingResponse> cancelledBooking(@PathVariable String id) {
-        BookingResponse result = bookingMapper.toBookingResponse(bookingService.cancelBooking(id));
+    @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
+    ApiResponse<BookingResponse> cancelledBooking(@PathVariable String id, @RequestBody @Valid BookingCancelRequest request) {
+        BookingResponse result = bookingMapper.toBookingResponse(bookingService.cancelBooking(id, request));
         return ApiResponse.<BookingResponse>builder()
                 .data(result)
                 .build();
     }
 
     @PostMapping("/quote")
+    @PreAuthorize("hasAuthority('BOOKING_READ')")
     ApiResponse<PricingResultResponse> quote(@RequestBody @Valid QuoteRequest request) {
         PricingResultResponse result = bookingService.quote(request);
         return ApiResponse.<PricingResultResponse>builder()

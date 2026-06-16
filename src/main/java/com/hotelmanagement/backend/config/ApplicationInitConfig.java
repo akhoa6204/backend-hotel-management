@@ -66,44 +66,93 @@ public class ApplicationInitConfig {
                 return;
             }
 
-            Permisson bookingCreate = permissionRepository.save(
-                    Permisson.builder()
-                            .name("BOOKING_CREATE")
-                            .description("Create booking")
-                            .build()
-            );
+            String[] entities = {
+                    "AMENITY",
+                    "BOOKING",
+                    "EXTRA_SERVICE",
+                    "HOUSEKEEPING_TASK",
+                    "INVALIDATED_TOKEN",
+                    "INVOICE",
+                    "INVOICE_ITEM",
+                    "INVOICE_PROMOTION",
+                    "PAYMENT",
+                    "PERMISSION",
+                    "PROMOTION",
+                    "ROLE",
+                    "ROOM",
+                    "ROOM_TYPE",
+                    "ROOM_TYPE_IMAGE",
+                    "SHIFT",
+                    "STAFF_SHIFT_ASSIGNMENT",
+                    "USER"
+            };
 
-            Permisson bookingUpdate = permissionRepository.save(
-                    Permisson.builder()
-                            .name("BOOKING_UPDATE")
-                            .description("Update booking")
-                            .build()
-            );
+            String[] actions = {
+                    "CREATE",
+                    "READ",
+                    "UPDATE",
+                    "DELETE"
+            };
 
-            Permisson paymentManage = permissionRepository.save(
-                    Permisson.builder()
-                            .name("PAYMENT_MANAGE")
-                            .description("Manage payment")
-                            .build()
-            );
+            HashSet<Permisson> allPermissions = new HashSet<>();
 
-            Permisson housekeepingManage = permissionRepository.save(
-                    Permisson.builder()
-                            .name("HOUSEKEEPING_MANAGE")
-                            .description("Manage housekeeping")
-                            .build()
-            );
+            for (String entity : entities) {
+                for (String action : actions) {
+                    Permisson permission = permissionRepository.save(
+                            Permisson.builder()
+                                    .name(entity + "_" + action)
+                                    .description(formatPermissionDescription(action, entity))
+                                    .build()
+                    );
 
-            HashSet<Permisson> adminPermissions = new HashSet<>();
-            adminPermissions.add(bookingCreate);
-            adminPermissions.add(bookingUpdate);
-            adminPermissions.add(paymentManage);
-            adminPermissions.add(housekeepingManage);
+                    allPermissions.add(permission);
+                }
+            }
+
+            HashSet<Permisson> adminPermissions = new HashSet<>(allPermissions);
+
+            HashSet<Permisson> receptionistPermissions = new HashSet<>();
+            addCrudPermissions(receptionistPermissions, allPermissions, "BOOKING", false);
+            addCrudPermissions(receptionistPermissions, allPermissions, "HOUSEKEEPING_TASK", false);
+            addCrudPermissions(receptionistPermissions, allPermissions, "INVOICE", false);
+            addCrudPermissions(receptionistPermissions, allPermissions, "INVOICE_ITEM", true);
+            addCrudPermissions(receptionistPermissions, allPermissions, "INVOICE_PROMOTION", true);
+            addCrudPermissions(receptionistPermissions, allPermissions, "PAYMENT", false);
+            addReadUpdatePermissions(receptionistPermissions, allPermissions, "ROOM");
+            addReadUpdatePermissions(receptionistPermissions, allPermissions, "ROOM_TYPE");
+            addPermission(receptionistPermissions, allPermissions, "PROMOTION_READ");
+            addPermission(receptionistPermissions, allPermissions, "SHIFT_READ");
+            addPermission(receptionistPermissions, allPermissions, "ROOM_TYPE_IMAGE_READ");
+            addPermission(receptionistPermissions, allPermissions, "USER_READ");
+            addPermission(receptionistPermissions, allPermissions, "EXTRA_SERVICE_READ");
+            addPermission(receptionistPermissions, allPermissions, "AMENITY_READ");
+            addPermission(receptionistPermissions, allPermissions, "STAFF_SHIFT_ASSIGNMENT_READ");
+
+            HashSet<Permisson> housekeepingPermissions = new HashSet<>();
+            addCrudPermissions(housekeepingPermissions, allPermissions, "HOUSEKEEPING_TASK", false);
+            addPermission(housekeepingPermissions, allPermissions, "SHIFT_READ");
+            addPermission(housekeepingPermissions, allPermissions, "USER_READ");
+            addPermission(housekeepingPermissions, allPermissions, "STAFF_SHIFT_ASSIGNMENT_READ");
+
+            HashSet<Permisson> userPermissions = new HashSet<>();
+            addPermission(userPermissions, allPermissions, "BOOKING_CREATE");
+            addPermission(userPermissions, allPermissions, "BOOKING_READ");
+            addPermission(userPermissions, allPermissions, "BOOKING_UPDATE");
+            addPermission(userPermissions, allPermissions, "PAYMENT_CREATE");
+            addPermission(userPermissions, allPermissions, "PAYMENT_UPDATE");
+            addPermission(userPermissions, allPermissions, "ROOM_READ");
+            addPermission(userPermissions, allPermissions, "ROOM_TYPE_READ");
+            addPermission(userPermissions, allPermissions, "PROMOTION_READ");
+            addPermission(userPermissions, allPermissions, "ROOM_TYPE_IMAGE_READ");
+            addPermission(userPermissions, allPermissions, "USER_READ");
+            addPermission(userPermissions, allPermissions, "AMENITY_READ");
+            addPermission(userPermissions, allPermissions, "INVOICE_READ");
 
             Role userRole = roleRepository.save(
                     Role.builder()
                             .name(UserRole.USER.name())
                             .description("User role")
+                            .permissions(userPermissions)
                             .build()
             );
 
@@ -183,7 +232,7 @@ public class ApplicationInitConfig {
                             .name("STANDARD")
                             .description("Standard room")
                             .capacity(2)
-                            .basePrice(BigDecimal.valueOf(100))
+                            .basePrice(BigDecimal.valueOf(300000))
                             .amenities(standardAmenities)
                             .active(true)
                             .build()
@@ -194,7 +243,7 @@ public class ApplicationInitConfig {
                             .name("SUPERIOR")
                             .description("Superior room")
                             .capacity(2)
-                            .basePrice(BigDecimal.valueOf(150))
+                            .basePrice(BigDecimal.valueOf(450000))
                             .amenities(superiorAmenities)
                             .active(true)
                             .build()
@@ -205,7 +254,7 @@ public class ApplicationInitConfig {
                             .name("DELUXE")
                             .description("Deluxe room")
                             .capacity(3)
-                            .basePrice(BigDecimal.valueOf(220))
+                            .basePrice(BigDecimal.valueOf(750000))
                             .amenities(deluxeAmenities)
                             .active(true)
                             .build()
@@ -216,7 +265,7 @@ public class ApplicationInitConfig {
                             .name("PREMIUM")
                             .description("Premium room")
                             .capacity(4)
-                            .basePrice(BigDecimal.valueOf(320))
+                            .basePrice(BigDecimal.valueOf(1000000))
                             .amenities(premiumAmenities)
                             .active(true)
                             .build()
@@ -227,7 +276,7 @@ public class ApplicationInitConfig {
                             .name("EXECUTIVE")
                             .description("Executive room")
                             .capacity(4)
-                            .basePrice(BigDecimal.valueOf(450))
+                            .basePrice(BigDecimal.valueOf(1250000))
                             .amenities(executiveAmenities)
                             .active(true)
                             .build()
@@ -238,7 +287,7 @@ public class ApplicationInitConfig {
                             .name("PRESIDENTIAL")
                             .description("Presidential suite")
                             .capacity(6)
-                            .basePrice(BigDecimal.valueOf(1000))
+                            .basePrice(BigDecimal.valueOf(1500000))
                             .amenities(presidentialAmenities)
                             .active(true)
                             .build()
@@ -276,27 +325,27 @@ public class ApplicationInitConfig {
             }
 
             String[][] services = {
-                    {"Laundry", "Laundry and ironing service", "SERVICE", "12"},
-                    {"Breakfast Buffet", "Daily breakfast buffet", "SERVICE", "15"},
-                    {"Spa", "Relaxing spa service", "SERVICE", "50"},
-                    {"Gym", "Fitness center access", "SERVICE", "10"},
-                    {"Room Cleaning", "Daily room cleaning", "SERVICE", "8"},
-                    {"Airport Shuttle", "Airport transport service", "SERVICE", "25"},
-                    {"Dinner Buffet", "International dinner buffet", "SERVICE", "35"},
-                    {"Motorbike Rental", "Motorbike rental service", "SERVICE", "20"},
-                    {"Swimming Pool", "Swimming pool access", "SERVICE", "5"},
-                    {"Baby Sitting", "Professional baby sitting", "SERVICE", "30"},
+                    {"Laundry", "Laundry and ironing service", "SERVICE", "12000"},
+                    {"Breakfast Buffet", "Daily breakfast buffet", "SERVICE", "150000"},
+                    {"Spa", "Relaxing spa service", "SERVICE", "500000"},
+                    {"Gym", "Fitness center access", "SERVICE", "100000"},
+                    {"Room Cleaning", "Daily room cleaning", "SERVICE", "80000"},
+                    {"Airport Shuttle", "Airport transport service", "SERVICE", "250000"},
+                    {"Dinner Buffet", "International dinner buffet", "SERVICE", "350000"},
+                    {"Motorbike Rental", "Motorbike rental service", "SERVICE", "200000"},
+                    {"Swimming Pool", "Swimming pool access", "SERVICE", "50000"},
+                    {"Baby Sitting", "Professional baby sitting", "SERVICE", "300000"},
 
-                    {"Late Checkout", "Checkout after standard time", "EXTRA_FEE", "20"},
-                    {"Early Checkin", "Checkin before standard time", "EXTRA_FEE", "20"},
-                    {"Pet Fee", "Additional pet fee", "EXTRA_FEE", "15"},
-                    {"Smoking Fee", "Smoking penalty fee", "EXTRA_FEE", "50"},
-                    {"Extra Bed", "Additional bed fee", "EXTRA_FEE", "25"},
-                    {"Mini Bar", "Mini bar consumption fee", "EXTRA_FEE", "18"},
-                    {"Damage Fee", "Room damage compensation", "EXTRA_FEE", "100"},
-                    {"Lost Key", "Lost room key fee", "EXTRA_FEE", "10"},
-                    {"Towel Fee", "Missing towel fee", "EXTRA_FEE", "12"},
-                    {"Cleaning Penalty", "Excessive dirty room fee", "EXTRA_FEE", "40"}
+                    {"Late Checkout", "Checkout after standard time", "EXTRA_FEE", "200000"},
+                    {"Early Checkin", "Checkin before standard time", "EXTRA_FEE", "200000"},
+                    {"Pet Fee", "Additional pet fee", "EXTRA_FEE", "150000"},
+                    {"Smoking Fee", "Smoking penalty fee", "EXTRA_FEE", "500000"},
+                    {"Extra Bed", "Additional bed fee", "EXTRA_FEE", "250000"},
+                    {"Mini Bar", "Mini bar consumption fee", "EXTRA_FEE", "180000"},
+                    {"Damage Fee", "Room damage compensation", "EXTRA_FEE", "1000000"},
+                    {"Lost Key", "Lost room key fee", "EXTRA_FEE", "100000"},
+                    {"Towel Fee", "Missing towel fee", "EXTRA_FEE", "120000"},
+                    {"Cleaning Penalty", "Excessive dirty room fee", "EXTRA_FEE", "400000"}
             };
 
             for (String[] service : services) {
@@ -314,11 +363,11 @@ public class ApplicationInitConfig {
             promotionRepository.save(
                     Promotion.builder()
                             .name("Summer Auto Discount")
-                            .description("Auto 15% discount for invoice over 200")
+                            .description("Auto 15% discount for invoice over 2,000,000 VND")
                             .discountType(DiscountType.PERCENTAGE)
                             .discountValue(BigDecimal.valueOf(15))
-                            .minTotal(BigDecimal.valueOf(200))
-                            .maxDiscountAmount(BigDecimal.valueOf(80))
+                            .minTotal(BigDecimal.valueOf(2000000))
+                            .maxDiscountAmount(BigDecimal.valueOf(800000))
                             .scope(DiscountScope.INVOICE)
                             .priority(1)
                             .quotaTotal(100)
@@ -334,11 +383,11 @@ public class ApplicationInitConfig {
             promotionRepository.save(
                     Promotion.builder()
                             .name("Weekend Auto Discount")
-                            .description("Auto 10% weekend discount")
+                            .description("Auto 10% weekend discount for invoice over 1,500,000 VND")
                             .discountType(DiscountType.PERCENTAGE)
                             .discountValue(BigDecimal.valueOf(10))
-                            .minTotal(BigDecimal.valueOf(150))
-                            .maxDiscountAmount(BigDecimal.valueOf(50))
+                            .minTotal(BigDecimal.valueOf(1500000))
+                            .maxDiscountAmount(BigDecimal.valueOf(500000))
                             .scope(DiscountScope.INVOICE)
                             .priority(2)
                             .quotaTotal(100)
@@ -360,9 +409,9 @@ public class ApplicationInitConfig {
                                 .discountType(i % 2 == 0 ? DiscountType.PERCENTAGE : DiscountType.FIXED_AMOUNT)
                                 .discountValue(i % 2 == 0
                                         ? BigDecimal.valueOf(10)
-                                        : BigDecimal.valueOf(25))
-                                .minTotal(BigDecimal.valueOf(100))
-                                .maxDiscountAmount(BigDecimal.valueOf(100))
+                                        : BigDecimal.valueOf(250000))
+                                .minTotal(BigDecimal.valueOf(1000000))
+                                .maxDiscountAmount(BigDecimal.valueOf(1000000))
                                 .scope(DiscountScope.INVOICE)
                                 .priority(i + 2)
                                 .quotaTotal(50)
@@ -380,6 +429,7 @@ public class ApplicationInitConfig {
                     Role.builder()
                             .name(UserRole.HOUSEKEEPING.name())
                             .description("Housekeeping role")
+                            .permissions(housekeepingPermissions)
                             .build()
             );
 
@@ -387,6 +437,7 @@ public class ApplicationInitConfig {
                     Role.builder()
                             .name(UserRole.RECEPTIONIST.name())
                             .description("Receptionist role")
+                            .permissions(receptionistPermissions)
                             .build()
             );
 
@@ -494,5 +545,48 @@ public class ApplicationInitConfig {
 
             log.warn("Application sample seed data initialized successfully");
         };
+    }
+
+    private String formatPermissionDescription(String action, String entity) {
+        String formattedAction = action.substring(0, 1).toUpperCase() + action.substring(1).toLowerCase();
+        String formattedEntity = entity.toLowerCase().replace("_", " ");
+        return formattedAction + " " + formattedEntity;
+    }
+
+    private void addCrudPermissions(
+            HashSet<Permisson> targetPermissions,
+            HashSet<Permisson> allPermissions,
+            String entity,
+            boolean includeDelete
+    ) {
+        addPermission(targetPermissions, allPermissions, entity + "_CREATE");
+        addPermission(targetPermissions, allPermissions, entity + "_READ");
+        addPermission(targetPermissions, allPermissions, entity + "_UPDATE");
+
+        if (includeDelete) {
+            addPermission(targetPermissions, allPermissions, entity + "_DELETE");
+        }
+    }
+
+    private void addReadUpdatePermissions(
+            HashSet<Permisson> targetPermissions,
+            HashSet<Permisson> allPermissions,
+            String entity
+    ) {
+        addPermission(targetPermissions, allPermissions, entity + "_READ");
+        addPermission(targetPermissions, allPermissions, entity + "_UPDATE");
+    }
+
+    private void addPermission(
+            HashSet<Permisson> targetPermissions,
+            HashSet<Permisson> allPermissions,
+            String permissionName
+    ) {
+        Permisson permission = allPermissions.stream()
+                .filter(item -> item.getName().equals(permissionName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Permission not found: " + permissionName));
+
+        targetPermissions.add(permission);
     }
 }

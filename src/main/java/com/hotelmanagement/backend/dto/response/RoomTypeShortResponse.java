@@ -17,4 +17,5 @@ public class RoomTypeShortResponse {
     Long id;
     String name;
     String capacity;
+    BigDecimal basePrice;
 }

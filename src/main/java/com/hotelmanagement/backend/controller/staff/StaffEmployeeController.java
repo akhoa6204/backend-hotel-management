@@ -1,9 +1,8 @@
-package com.hotelmanagement.backend.controller.admin;
+package com.hotelmanagement.backend.controller.staff;
 
 import com.hotelmanagement.backend.dto.request.EmployeeCreationRequest;
 import com.hotelmanagement.backend.dto.request.EmployeeResetPasswordRequest;
 import com.hotelmanagement.backend.dto.request.EmployeeUpdateRequest;
-import com.hotelmanagement.backend.dto.request.UserUpdateRequest;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.UserResponse;
@@ -19,29 +18,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/employees")
+@RequestMapping("/staff/employees")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@PreAuthorize("hasRole('ADMIN')")
-public class EmployeeController {
+public class StaffEmployeeController {
     UserService userService;
     UserMapper userMapper;
 
+    @PreAuthorize("hasAuthority('USER_READ')")
     @GetMapping("")
     ApiResponse<List<UserShortResponse>> getUsers(
             @RequestParam(required = false, defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "10") int limit,
-            @RequestParam(required = false) UserRole role
+            @RequestParam(required = false) UserRole role,
+            @RequestParam(required = false, defaultValue = "") String q
     ) {
         PageRequest pageRequest = PageRequest.of(page - 1, limit);
-        Page<UserShortResponse> result = userService.getEmployees(pageRequest, role).map(userMapper::toUserShortResponse);
+        Page<UserShortResponse> result = userService.getEmployees(pageRequest, role, q).map(userMapper::toUserShortResponse);
 
         MetaPagination meta = MetaPagination.builder()
                 .page(page)
@@ -58,6 +57,7 @@ public class EmployeeController {
                 .build();
     }
 
+    @PreAuthorize("hasAuthority('USER_READ')")
     @GetMapping("/{id}")
     ApiResponse<UserShortResponse> getUser(@PathVariable String id) {
         UserShortResponse userResponse = userMapper.toUserShortResponse(userService.getById(id));
@@ -65,6 +65,7 @@ public class EmployeeController {
         return ApiResponse.<UserShortResponse>builder().data(userResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('USER_CREATE')")
     @PostMapping("")
     ApiResponse<UserShortResponse> createEmployee(@RequestBody @Valid EmployeeCreationRequest request) {
         UserShortResponse userResponse = userMapper.toUserShortResponse(userService.createEmployee(request));
@@ -72,6 +73,7 @@ public class EmployeeController {
         return ApiResponse.<UserShortResponse>builder().data(userResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     @PatchMapping("/{id}/password")
     ApiResponse<String> resetPassword(@PathVariable String id, @RequestBody @Valid EmployeeResetPasswordRequest request) {
         userService.resetPassword(id, request);
@@ -79,6 +81,7 @@ public class EmployeeController {
         return ApiResponse.<String>builder().message("Cập nhật mật khẩu thành công").build();
     }
 
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     @PatchMapping("/{id}")
     ApiResponse<UserResponse> updateUser(@PathVariable String id, @RequestBody EmployeeUpdateRequest request){
         UserResponse user =  userMapper.toUserResponse(userService.updateEmployee(id, request));

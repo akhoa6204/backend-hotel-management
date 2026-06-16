@@ -5,6 +5,7 @@ import com.hotelmanagement.backend.dto.request.RoomUpdateRequest;
 import com.hotelmanagement.backend.dto.response.RoomResponse;
 import com.hotelmanagement.backend.entity.Room;
 import com.hotelmanagement.backend.entity.RoomType;
+import com.hotelmanagement.backend.enums.BookingStatus;
 import com.hotelmanagement.backend.enums.ErrorCode;
 import com.hotelmanagement.backend.enums.RoomStatus;
 import com.hotelmanagement.backend.exception.AppException;
@@ -20,7 +21,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,7 +32,6 @@ import java.util.Objects;
 public class RoomService {
     RoomRepository roomRepository;
 
-    RoomTypeService roomTypeService;
     RoomTypeRepository roomTypeRepository;
 
     RoomMapper roomMapper;
@@ -89,8 +91,10 @@ public class RoomService {
 
         roomMapper.updateRoom(room, request);
 
-        if(request.getRoomTypeId() != null){
-            RoomType roomType = roomTypeService.getRoomType(request.getRoomTypeId());
+        if (request.getRoomTypeId() != null) {
+            RoomType roomType = roomTypeRepository.findByIdAndActiveTrue(request.getRoomTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
+
             room.setRoomType(roomType);
         }
 
@@ -103,5 +107,31 @@ public class RoomService {
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_ALREADY_EXISTS));
     }
 
+    public Optional<Long> findFirstAvailableRoomIdByRoomType(
+            Long roomTypeId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer capacity
+    ) {
+        if (roomTypeId == null || startDate == null || endDate == null || capacity == null) {
+            return Optional.empty();
+        }
+
+        if (startDate.isAfter(endDate) || startDate.isEqual(endDate)) {
+            return Optional.empty();
+        }
+
+        return roomRepository.findFirstAvailableRoomIdByRoomType(
+                roomTypeId,
+                startDate,
+                endDate,
+                capacity,
+                List.of(
+                        BookingStatus.CONFIRMED.name(),
+                        BookingStatus.CHECKED_IN.name(),
+                        BookingStatus.PENDING.name()
+                )
+        );
+    }
 
 }

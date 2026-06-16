@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,62 +43,54 @@ public class ShiftService {
             String q,
             LocalDate startDate,
             LocalDate endDate,
-            UserRole position,
-            String userId
+            UserRole position
     ) {
+        List<String> roleNames = position == null
+                ? List.of(
+                        UserRole.ADMIN.name(),
+                        UserRole.RECEPTIONIST.name(),
+                        UserRole.HOUSEKEEPING.name()
+                )
+                : List.of(position.name());
+
+        List<User> staffs = userRepository.findByRole_NameInAndActiveTrue(roleNames);
+
+        if (q != null && !q.isBlank()) {
+            String keyword = q.trim().toLowerCase();
+
+            staffs = staffs.stream()
+                    .filter(user -> user.getFullName() != null
+                            && user.getFullName().toLowerCase().contains(keyword))
+                    .toList();
+        }
+
+        List<StaffShiftAssignment> assignments =
+                staffShiftAssignmentRepository.findByWorkDateBetween(startDate, endDate);
+
+        return buildStaffShiftResponses(staffs, assignments);
+    }
+
+    public List<StaffShiftResponse> getMySchedule(
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userService.getById(userId);
-        boolean isManager =
-                currentUser.getRole().getName().equals("ADMIN")
-                        || currentUser.getRole().getName().equals("MANAGER");
-        List<User> staffs;
 
-        if (isManager) {
+        List<StaffShiftAssignment> assignments =
+                staffShiftAssignmentRepository.findByStaffIdAndWorkDateBetween(
+                        currentUser.getId(),
+                        startDate,
+                        endDate
+                );
 
-            List<String> roleNames = position == null
-                    ? List.of(
-                            UserRole.ADMIN.name(),
-                            UserRole.RECEPTIONIST.name(),
-                            UserRole.HOUSEKEEPING.name()
-                    )
-                    : List.of(position.name());
+        return buildStaffShiftResponses(List.of(currentUser), assignments);
+    }
 
-            staffs = userRepository.findByRole_NameInAndActiveTrue(roleNames);
-
-            if (q != null && !q.isBlank()) {
-                String keyword = q.trim().toLowerCase();
-
-                staffs = staffs.stream()
-                        .filter(user -> user.getFullName() != null
-                                && user.getFullName().toLowerCase().contains(keyword))
-                        .toList();
-            }
-
-        } else {
-            staffs = List.of(currentUser);
-        }
-
-        List<StaffShiftAssignment> assignments;
-
-        if (isManager) {
-
-            assignments =
-                    staffShiftAssignmentRepository
-                            .findByWorkDateBetween(
-                                    startDate,
-                                    endDate
-                            );
-
-        } else {
-
-            assignments =
-                    staffShiftAssignmentRepository
-                            .findByStaffIdAndWorkDateBetween(
-                                    currentUser.getId(),
-                                    startDate,
-                                    endDate
-                            );
-        }
-
+    private List<StaffShiftResponse> buildStaffShiftResponses(
+            List<User> staffs,
+            List<StaffShiftAssignment> assignments
+    ) {
         Map<String, List<StaffShiftAssignment>> assignmentMap =
                 assignments.stream()
                         .collect(Collectors.groupingBy(
@@ -125,19 +118,10 @@ public class ShiftService {
                                         .map(item ->
                                                 AssignmentInfoResponse.builder()
                                                         .id(item.getId())
-                                                        .staffId(
-                                                                item.getStaff()
-                                                                        .getId()
-                                                        )
-                                                        .workDate(
-                                                                item.getWorkDate()
-                                                        )
-                                                        .position(
-                                                                item.getPosition()
-                                                                        .name()
-                                                        )
+                                                        .staffId(item.getStaff().getId())
+                                                        .workDate(item.getWorkDate())
+                                                        .position(item.getPosition().name())
                                                         .shift(shiftMapper.toShiftResponse(item.getShift()))
-
                                                         .build()
                                         )
                                         .toList()
@@ -162,5 +146,11 @@ public class ShiftService {
                 .build();
 
         staffShiftAssignmentRepository.save(assignment);
+    }
+    public void deleteStaffShift(Integer id) {
+        StaffShiftAssignment assignment = staffShiftAssignmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Staff shift assignment not found"));
+
+        staffShiftAssignmentRepository.delete(assignment);
     }
 }

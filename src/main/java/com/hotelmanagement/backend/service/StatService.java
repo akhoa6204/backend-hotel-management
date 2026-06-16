@@ -105,14 +105,14 @@ public class StatService {
 
     public Page<BookingResponse> getCheckins(Pageable pageable) {
         LocalDate today = LocalDate.now();
-        return bookingRepository.findByCheckInDate(today, pageable)
+        return bookingRepository.findByCheckInDateAndStatusNot(today, BookingStatus.NO_SHOW, pageable)
                 .map(bookingMapper::toBookingResponse);
     }
 
     public Page<BookingResponse> getCheckouts(Pageable pageable) {
         LocalDate today = LocalDate.now();
 
-        return bookingRepository.findByCheckOutDate(today, pageable)
+        return bookingRepository.findByCheckOutDateAndStatusNot(today, BookingStatus.NO_SHOW, pageable)
                 .map(bookingMapper::toBookingResponse);
     }
 

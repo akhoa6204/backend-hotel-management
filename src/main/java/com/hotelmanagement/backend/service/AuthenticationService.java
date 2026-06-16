@@ -6,7 +6,6 @@ import com.hotelmanagement.backend.dto.request.LogoutRequest;
 import com.hotelmanagement.backend.dto.request.RefreshRequest;
 import com.hotelmanagement.backend.dto.response.AuthenticationResponse;
 import com.hotelmanagement.backend.dto.response.IntrospectResponse;
-import com.hotelmanagement.backend.dto.response.UserShortResponse;
 import com.hotelmanagement.backend.entity.InvalidatedToken;
 import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
@@ -26,7 +25,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -44,6 +42,7 @@ public class AuthenticationService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
     UserMapper userMapper;
+    PasswordEncoder passwordEncoder;
 
     @NonFinal
     @Value("${jwt.signer-key}")
@@ -60,7 +59,9 @@ public class AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+        if (!user.isActive()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if(!authenticated) {
@@ -69,12 +70,10 @@ public class AuthenticationService {
 
         String token = generateToken(user);
 
-        UserShortResponse userShortResponse = userMapper.toUserShortResponse(user);
-
         return AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(true)
-                .user(userShortResponse)
+                .user(userMapper.toUserShortResponse(user))
                 .build();
     }
     private String generateToken(User user) {
@@ -199,4 +198,3 @@ public class AuthenticationService {
         return signedJWT;
     }
 }
-

@@ -26,8 +26,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
+import java.math.BigDecimal;
 
+import java.math.RoundingMode;
+
+import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -52,7 +57,6 @@ public class PromotionService {
             PageRequest request,
             String q
     ) {
-
         return promotionRepository
                 .getItemsWithParams(q, request);
     }
@@ -75,7 +79,7 @@ public class PromotionService {
         Promotion promotion = promotionRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
 
-        if (promotionRepository.existsByCodeAndActiveTrue(request.getCode())) {
+        if (!Objects.equals(promotion.getCode(), request.getCode()) && promotionRepository.existsByCodeAndActiveTrue(request.getCode())) {
             throw new AppException(ErrorCode.PROMOTION_ALREADY_EXISTS);
         }
 
@@ -110,13 +114,93 @@ public class PromotionService {
                 ).stream().findFirst();
     }
 
-    public void increaseQuota(Promotion promotion) {
-        if (promotion == null) return;
-
+    public void increaseQuota(Long id) {
+        Promotion promotion = getById(id);
         promotion.setQuotaUsed(promotion.getQuotaUsed() + 1);
 
         promotionRepository.save(promotion);
     }
 
+    public BigDecimal calculateAutoDiscountAmount(
+            BigDecimal basePrice,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        if (basePrice == null || startDate == null || endDate == null) {
+            return BigDecimal.ZERO;
+        }
+        List<Promotion> promotions = getValidAutoPromotions(startDate, endDate);
+
+        if (promotions.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+
+        for (Promotion promotion : promotions) {
+            BigDecimal discount = calculateDiscountByPromotion(basePrice, promotion);
+
+            if (discount.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+
+            totalDiscount = totalDiscount.add(discount);
+
+            if (!promotion.isStackable()) {
+                break;
+            }
+        }
+
+        if (totalDiscount.compareTo(basePrice) > 0) {
+            return basePrice;
+        }
+
+        return totalDiscount;
+    }
+
+    public List<Promotion> getValidAutoPromotions(
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        if (startDate == null || endDate == null) {
+            return List.of();
+        }
+
+        return promotionRepository.findValidAutoPromotions(startDate, endDate);
+    }
+
+    private BigDecimal calculateDiscountByPromotion(
+            BigDecimal basePrice,
+            Promotion promotion
+    ) {
+        if (promotion == null || promotion.getDiscountValue() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        if (promotion.getQuotaTotal() > 0
+                && promotion.getQuotaUsed() >= promotion.getQuotaTotal()) {
+            return BigDecimal.ZERO;
+        }
+
+        if (promotion.getMinTotal() != null
+                && basePrice.compareTo(promotion.getMinTotal()) < 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal discount = switch (promotion.getDiscountType()) {
+            case PERCENTAGE -> basePrice
+                    .multiply(promotion.getDiscountValue())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            case FIXED_AMOUNT -> promotion.getDiscountValue();
+        };
+
+        if (promotion.getMaxDiscountAmount() != null
+                && discount.compareTo(promotion.getMaxDiscountAmount()) > 0) {
+            return promotion.getMaxDiscountAmount();
+        }
+
+        return discount;
+    }
 
 }

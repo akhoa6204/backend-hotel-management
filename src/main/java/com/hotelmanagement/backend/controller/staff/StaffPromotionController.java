@@ -1,45 +1,40 @@
-package com.hotelmanagement.backend.controller.admin;
+package com.hotelmanagement.backend.controller.staff;
 
 import com.hotelmanagement.backend.dto.request.PromotionCreationRequest;
 import com.hotelmanagement.backend.dto.request.PromotionUpdateRequest;
-import com.hotelmanagement.backend.dto.request.RoomCreationRequest;
-import com.hotelmanagement.backend.dto.request.RoomUpdateRequest;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.PromotionResponse;
-import com.hotelmanagement.backend.dto.response.RoomResponse;
 import com.hotelmanagement.backend.mapper.PromotionMapper;
 import com.hotelmanagement.backend.service.PromotionService;
-import com.hotelmanagement.backend.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/promotions")
+@RequestMapping("/staff/promotions")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
-public class PromotionController {
+public class StaffPromotionController {
     PromotionService promotionService;
     PromotionMapper promotionMapper;
     @PostMapping("")
-    public ApiResponse<PromotionResponse> createRoom(@RequestBody @Valid PromotionCreationRequest request) {
+    @PreAuthorize("hasAuthority('PROMOTION_CREATE')")
+    public ApiResponse<PromotionResponse> create(@RequestBody @Valid PromotionCreationRequest request) {
         PromotionResponse response = promotionMapper.toPromotionResponse(promotionService.create(request));
 
         return ApiResponse.<PromotionResponse>builder().data(response).build();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PROMOTION_READ')")
     public ApiResponse<PromotionResponse> getById(@PathVariable Long id) {
         PromotionResponse response = promotionMapper.toPromotionResponse(promotionService.getById(id));
 
@@ -47,6 +42,7 @@ public class PromotionController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('PROMOTION_READ')")
     public ApiResponse<List<PromotionResponse>> getList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
@@ -79,6 +75,7 @@ public class PromotionController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PROMOTION_DELETE')")
     public ApiResponse<String> delete(@PathVariable Long id) {
         promotionService.deleteById(id);
         return ApiResponse.<String>builder()
@@ -88,7 +85,8 @@ public class PromotionController {
 
 
     @PutMapping("/{id}")
-    public ApiResponse<PromotionResponse> updateRoomType(@RequestBody PromotionUpdateRequest request, @PathVariable Long id) {
+    @PreAuthorize("hasAuthority('PROMOTION_UPDATE')")
+    public ApiResponse<PromotionResponse> update(@RequestBody PromotionUpdateRequest request, @PathVariable Long id) {
         PromotionResponse response = promotionMapper.toPromotionResponse(promotionService.update(id, request));
 
         return ApiResponse.<PromotionResponse>builder().data(response).build();

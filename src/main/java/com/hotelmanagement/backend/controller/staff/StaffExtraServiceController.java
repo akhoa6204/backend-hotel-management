@@ -1,40 +1,33 @@
-package com.hotelmanagement.backend.controller.admin;
+package com.hotelmanagement.backend.controller.staff;
 
 import com.hotelmanagement.backend.dto.request.ExtraServiceCreationRequest;
 import com.hotelmanagement.backend.dto.request.ExtraServiceUpdateRequest;
-import com.hotelmanagement.backend.dto.request.RoomCreationRequest;
-import com.hotelmanagement.backend.dto.request.RoomUpdateRequest;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.ExtraServiceResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
-import com.hotelmanagement.backend.dto.response.RoomResponse;
-import com.hotelmanagement.backend.entity.ExtraService;
 import com.hotelmanagement.backend.enums.ServiceType;
 import com.hotelmanagement.backend.mapper.ExtraServiceMapper;
 import com.hotelmanagement.backend.service.ExtraServiceService;
-import com.hotelmanagement.backend.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/services")
+@RequestMapping("/staff/extra-services")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
-public class ExtraServiceController {
+public class StaffExtraServiceController {
     ExtraServiceService extraService;
     ExtraServiceMapper extraServiceMapper;
 
+    @PreAuthorize("hasAuthority('EXTRA_SERVICE_CREATE')")
     @PostMapping("")
     public ApiResponse<ExtraServiceResponse> create(@RequestBody @Valid ExtraServiceCreationRequest request) {
         ExtraServiceResponse extraServiceResponse = extraServiceMapper.toExtraServiceResponse(extraService.create(request));
@@ -42,6 +35,7 @@ public class ExtraServiceController {
         return ApiResponse.<ExtraServiceResponse>builder().data(extraServiceResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('EXTRA_SERVICE_READ')")
     @GetMapping("/{id}")
     public ApiResponse<ExtraServiceResponse> getById(@PathVariable Long id) {
         ExtraServiceResponse extraServiceResponse  = extraServiceMapper.toExtraServiceResponse(extraService.getByid(id));
@@ -49,6 +43,7 @@ public class ExtraServiceController {
         return ApiResponse.<ExtraServiceResponse>builder().data(extraServiceResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('EXTRA_SERVICE_READ')")
     @GetMapping
     public ApiResponse<List<ExtraServiceResponse>> getList(
             @RequestParam(defaultValue = "1") int page,
@@ -83,6 +78,7 @@ public class ExtraServiceController {
                 .build();
     }
 
+    @PreAuthorize("hasAuthority('EXTRA_SERVICE_DELETE')")
     @DeleteMapping("/{id}")
     public ApiResponse<String> deleteById(@PathVariable Long id) {
         extraService.deleteById(id);
@@ -92,6 +88,7 @@ public class ExtraServiceController {
     }
 
 
+    @PreAuthorize("hasAuthority('EXTRA_SERVICE_UPDATE')")
     @PutMapping("/{id}")
     public ApiResponse<ExtraServiceResponse> update(@RequestBody ExtraServiceUpdateRequest request, @PathVariable Long id) {
         ExtraServiceResponse response = extraServiceMapper.toExtraServiceResponse(extraService.update(id, request));

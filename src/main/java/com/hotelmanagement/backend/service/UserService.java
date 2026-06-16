@@ -1,7 +1,6 @@
 package com.hotelmanagement.backend.service;
 
 import com.hotelmanagement.backend.dto.request.*;
-import com.hotelmanagement.backend.dto.response.UserResponse;
 import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.enums.UserRole;
@@ -18,9 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
-import java.util.HashSet;
 
 @Slf4j
 @Service
@@ -41,6 +37,7 @@ public class UserService {
 
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setActive(true);
 
         Role role = roleRepository.findById(UserRole.USER.name())
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
@@ -49,9 +46,9 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public Page<User> getEmployees(PageRequest pageRequest, UserRole role) {
+    public Page<User> getEmployees(PageRequest pageRequest, UserRole role, String q) {
         if (role == null) {
-            return userRepository.findEmployees(pageRequest);
+            return userRepository.findEmployees(q, pageRequest);
         }
 
         if (role == UserRole.USER) {
@@ -64,22 +61,6 @@ public class UserService {
     public User getById(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    public User updateUser(String userId, UserUpdateRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        userMapper.updateUser(user, request);
-        if(request.getPassword()!=null){
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-        if(request.getRole() != null) {
-            Role role = roleRepository.findById(request.getRole()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
-            user.setRole(role);
-        }
-
-
-        return userRepository.save(user);
     }
 
     public void deleteUser(String userId) {
@@ -118,5 +99,23 @@ public class UserService {
         userMapper.updateEmployee(user, request);
 
         return userRepository.save(user);
+    }
+    public User updateMe(String userId, UserUpdateRequest request) {
+        User user = getById(userId);
+
+        userMapper.updateUser(user, request);
+
+        return userRepository.save(user);
+    }
+
+    public void changeMyPassword(String userId, UserUpdatePasswordRequest request) {
+        User user = getById(userId);
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new AppException(ErrorCode.PASSWORD_INCORRECT);
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
     }
 }

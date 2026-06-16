@@ -19,6 +19,8 @@ public enum ErrorCode {
     EMAIL_ALREADY_EXISTS(1203, "Email already exists", HttpStatus.CONFLICT),
 
     PASSWORD_TOO_SHORT(1301, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
+    PASSWORD_INCORRECT(1302, "Current password is incorrect", HttpStatus.BAD_REQUEST),
+    PASSWORD_(1301, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
 
     PHONE_REQUIRED(1401, "Phone is required", HttpStatus.BAD_REQUEST),
     PHONE_INVALID(1402, "Phone must be 10 digits", HttpStatus.BAD_REQUEST),

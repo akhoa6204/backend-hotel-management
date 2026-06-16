@@ -54,13 +54,11 @@ public class PricingService {
         if (promotion != null) {
             promotionDiscount = calculateDiscount(promotion, subtotal);
             totalDiscount = totalDiscount.add(promotionDiscount);
-            promotionService.increaseQuota(promotion);
         }
 
         if (autoPromotion != null) {
             autoPromotionDiscount = calculateDiscount(autoPromotion, subtotal);
             totalDiscount = totalDiscount.add(autoPromotionDiscount);
-            promotionService.increaseQuota(autoPromotion);
         }
 
         totalDiscount = totalDiscount.min(subtotal);
@@ -84,15 +82,15 @@ public class PricingService {
 
         if (promotion.getDiscountType() == DiscountType.PERCENTAGE) {
             discount = subtotal.multiply(
-                    promotion.getDiscountValue().divide(BigDecimal.valueOf(100))
-                    );
+                    promotion.getDiscountValue().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+            );
         } else {
             discount = promotion.getDiscountValue();
         }
 
-        if (promotion.getMaxDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (promotion.getMaxDiscountAmount() != null
+                && promotion.getMaxDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
             discount = discount.min(promotion.getMaxDiscountAmount());
-
         }
         return discount.setScale(2, RoundingMode.HALF_UP);
     }

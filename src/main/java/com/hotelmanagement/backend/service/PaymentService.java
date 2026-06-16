@@ -83,10 +83,18 @@ public class PaymentService {
         paymentMapper.updatePayment(payment, request);
 
         if (payment.getStatus() == PaymentStatus.SUCCESS) {
-            return handleSuccessfulPayment(payment, payment.getTransactionCode());
+            payment = handleSuccessfulPayment(
+                    payment,
+                    payment.getTransactionCode()
+            );
         }
 
         invoiceService.reCalculate(payment.getInvoice());
+
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            return payment;
+        }
+
         return paymentRepository.save(payment);
     }
 
@@ -146,15 +154,7 @@ public class PaymentService {
             transactionCode = getStringValue(payload, "transactionCode");
         }
 
-        boolean expired = payment.getExpiredAt() != null
-                && payment.getExpiredAt().isBefore(LocalDateTime.now());
-        boolean needRefund = payment.getStatus() == PaymentStatus.FAILED || expired;
-
         Payment savedPayment = handleSuccessfulPayment(payment, transactionCode);
-
-        if (needRefund) {
-            createRefundPaymentIfNotExists(savedPayment.getInvoice(), payment.getAmount());
-        }
 
         return paymentMapper.toPaymentResponse(savedPayment);
     }
@@ -225,27 +225,31 @@ public class PaymentService {
         }
 
         Payment savedPayment = paymentRepository.save(payment);
+
         Invoice invoice = savedPayment.getInvoice();
+        Booking booking = invoice.getBooking();
 
-        InvoiceUpdateData invoiceUpdateData = InvoiceUpdateData.builder()
-                .invoiceStatus(InvoiceStatus.ACTIVE)
-                .build();
-        invoiceService.updateInvoice(invoice.getId(), invoiceUpdateData);
+        if (invoice.getStatus() != InvoiceStatus.ACTIVE
+                && invoice.getStatus() != InvoiceStatus.DONE) {
 
-        if (invoice.getBooking().getStatus() == BookingStatus.PENDING) {
-            bookingService.confirmBooking(invoice.getBooking().getId());
+            InvoiceUpdateData invoiceUpdateData = InvoiceUpdateData.builder()
+                    .invoiceStatus(InvoiceStatus.ACTIVE)
+                    .build();
+
+            invoiceService.updateInvoice(invoice.getId(), invoiceUpdateData);
         }
 
+        if (booking.getStatus() == BookingStatus.PENDING) {
+            bookingService.confirmBooking(booking.getId());
+        }
+
+        invoice = invoiceService.getById(invoice.getId());
         invoiceService.reCalculate(invoice);
 
         BigDecimal remainingAmount = invoice.getRemainingAmount();
 
         if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
             failOtherPendingPayments(invoice.getId(), savedPayment.getId());
-        }
-
-        if (remainingAmount.compareTo(BigDecimal.ZERO) < 0) {
-            createRefundPaymentIfNotExists(invoice, remainingAmount.abs());
         }
 
         return savedPayment;
@@ -262,29 +266,6 @@ public class PaymentService {
         }
 
         paymentRepository.saveAll(pendingPayments);
-    }
-
-    private void createRefundPaymentIfNotExists(Invoice invoice, BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return;
-        }
-
-        List<Payment> pendingRefundPayments = paymentRepository.findPendingRefundPaymentsByInvoiceId(invoice.getId());
-        if (!pendingRefundPayments.isEmpty()) {
-            return;
-        }
-
-        Payment refundPayment = Payment.builder()
-                .paymentCode("PAY_REFUND_" + System.currentTimeMillis())
-                .invoice(invoice)
-                .amount(amount)
-                .status(PaymentStatus.PENDING)
-                .method(PaymentMethod.BANK_TRANSFER)
-                .type(PaymentType.REFUND)
-                .paidAt(null)
-                .build();
-
-        paymentRepository.save(refundPayment);
     }
 
     private String getStringValue(Map<String, Object> payload, String key) {

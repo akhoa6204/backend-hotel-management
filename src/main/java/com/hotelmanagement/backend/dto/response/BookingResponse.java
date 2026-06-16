@@ -1,5 +1,7 @@
 package com.hotelmanagement.backend.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hotelmanagement.backend.entity.Room;
 import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.enums.BookingStatus;
@@ -9,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,6 +23,7 @@ import java.time.LocalTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class BookingResponse {
     String id;
     String bookingCode;
@@ -39,4 +43,12 @@ public class BookingResponse {
 
     boolean inspected;
     Long inspectionTaskId;
+    BigDecimal finalAmount;
+    BigDecimal remainingAmount;
+
+    BigDecimal roomAmount;
+    BigDecimal roomDiscountAmount;
+    BigDecimal roomFinalAmount;
+    BigDecimal depositPaidAmount;
+    BigDecimal roomPaymentPaidAmount;
 }

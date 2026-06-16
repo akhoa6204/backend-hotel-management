@@ -1,19 +1,13 @@
 package com.hotelmanagement.backend.service;
 
-import com.hotelmanagement.backend.dto.request.ExtraServiceCreationRequest;
-import com.hotelmanagement.backend.dto.request.ExtraServiceUpdateRequest;
-import com.hotelmanagement.backend.dto.request.HousekeepingTaskCreationRequest;
-import com.hotelmanagement.backend.dto.request.HousekeepingTaskUpdateRequest;
+import com.hotelmanagement.backend.dto.request.*;
 import com.hotelmanagement.backend.dto.response.BookingInspectionSocketResponse;
 import com.hotelmanagement.backend.dto.response.HousekeepingTaskResponse;
 import com.hotelmanagement.backend.entity.ExtraService;
 import com.hotelmanagement.backend.entity.HousekeepingTask;
 import com.hotelmanagement.backend.entity.Room;
 import com.hotelmanagement.backend.entity.User;
-import com.hotelmanagement.backend.enums.ErrorCode;
-import com.hotelmanagement.backend.enums.HousekeepingTaskStatus;
-import com.hotelmanagement.backend.enums.HousekeepingTaskType;
-import com.hotelmanagement.backend.enums.ServiceType;
+import com.hotelmanagement.backend.enums.*;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.mapper.ExtraServiceMapper;
 import com.hotelmanagement.backend.mapper.HousekeepingTaskMapper;
@@ -29,7 +23,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.hotelmanagement.backend.entity.StaffShiftAssignment;
-import com.hotelmanagement.backend.enums.StaffPosition;
 import com.hotelmanagement.backend.repository.StaffShiftAssignmentRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -124,6 +117,10 @@ public class HousekeepingTaskService {
         return housekeepingTaskRepository.getItemsWithParams(status, q, bookingId, pageRequest);
     }
 
+    public Page<HousekeepingTask> getMyTaskList(PageRequest pageRequest, HousekeepingTaskStatus status, String q, String bookingId, String staffId) {
+        return housekeepingTaskRepository.getMyItemsWithParams(status, q, bookingId, staffId, pageRequest);
+    }
+
     public HousekeepingTask updateTask(
             Long id, String userId, HousekeepingTaskUpdateRequest request) {
 
@@ -137,6 +134,14 @@ public class HousekeepingTaskService {
             housekeepingTask.setStartedAt(now);
         } else if (request.getStatus() == HousekeepingTaskStatus.COMPLETED) {
             housekeepingTask.setCompletedAt(now);
+            Room room = roomService.getByid(housekeepingTask.getRoom().getId());
+            if (!room.getStatus().equals(RoomStatus.OUT_OF_SERVICE) & housekeepingTask.getType().equals(HousekeepingTaskType.CLEANING)) {
+                RoomUpdateRequest roomUpdateRequest = RoomUpdateRequest.builder()
+                        .status(RoomStatus.VACANT_CLEAN)
+                        .build();
+                roomService.updateRoom(room.getId(), roomUpdateRequest);
+            }
+
         }
 
         if (housekeepingTask.getStaff() == null && request.getStaffId() == null) {

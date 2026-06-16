@@ -4,6 +4,7 @@ import com.hotelmanagement.backend.dto.request.RoomTypeCreationRequest;
 import com.hotelmanagement.backend.dto.request.RoomTypeUpdateRequest;
 import com.hotelmanagement.backend.dto.response.RoomTypeResponse;
 import com.hotelmanagement.backend.entity.*;
+import com.hotelmanagement.backend.enums.BookingStatus;
 import com.hotelmanagement.backend.enums.ErrorCode;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.mapper.RoomTypeMapper;
@@ -16,7 +17,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -28,6 +34,8 @@ public class RoomTypeService {
     RoomTypeMapper roomTypeMapper;
 
     AmenityRepository amenityRepository;
+    PromotionService promotionService;
+    RoomService roomService;
     public RoomTypeResponse createRoomType(RoomTypeCreationRequest request) {
         if (roomTypeRepository.existsByNameAndActiveTrue(request.getName())){
             throw new AppException(ErrorCode.ROOM_TYPE_ALREADY_EXISTS);
@@ -99,6 +107,70 @@ public class RoomTypeService {
         return roomTypeMapper.toRoomTypeResponse(roomTypeRepository.save(roomType));
     }
 
+    public Page<RoomTypeResponse> getPublicRoomTypes(
+            PageRequest pageRequest,
+            String q,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer capacity
+    ) {
+        boolean hasAvailabilityFilter =
+                startDate != null && endDate != null && capacity != null;
 
+        Page<RoomType> roomTypes = roomTypeRepository
+                .findByNameContainingIgnoreCaseAndActiveTrue(q, pageRequest);
+
+        LocalDate now = LocalDate.now();
+        return roomTypes.map(roomType -> {
+            RoomTypeResponse response =
+                    roomTypeMapper.toRoomTypeResponse(roomType);
+
+            BigDecimal basePrice = roomType.getBasePrice();
+
+            BigDecimal discountAmount = promotionService.calculateAutoDiscountAmount(
+                    basePrice,
+                    now,
+                    now
+            );
+
+            response.setDiscountAmount(discountAmount);
+
+            if (hasAvailabilityFilter) {
+                Optional<Long> availableRoomId = roomService.findFirstAvailableRoomIdByRoomType(
+                        roomType.getId(),
+                        startDate,
+                        endDate,
+                        capacity
+                );
+
+                response.setRoomId(availableRoomId.orElse(null));
+
+                response.setIsAvailable(availableRoomId.isPresent());
+            }
+
+            return response;
+        });
+    }
+
+    public RoomTypeResponse getPublicRoomType(
+            Long id
+    ) {
+        RoomType roomType = roomTypeRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_TYPE_NOT_FOUND));
+        LocalDate now = LocalDate.now();
+        RoomTypeResponse response = roomTypeMapper.toRoomTypeResponse(roomType);
+
+        BigDecimal basePrice = roomType.getBasePrice();
+
+        BigDecimal discountAmount = promotionService.calculateAutoDiscountAmount(
+                basePrice,
+                now,
+                now
+        );
+
+        response.setDiscountAmount(discountAmount);
+
+        return response;
+    }
 
 }

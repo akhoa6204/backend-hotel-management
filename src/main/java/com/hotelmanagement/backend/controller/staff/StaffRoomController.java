@@ -1,16 +1,12 @@
-package com.hotelmanagement.backend.controller.admin;
+package com.hotelmanagement.backend.controller.staff;
 
 import com.hotelmanagement.backend.dto.request.RoomCreationRequest;
-import com.hotelmanagement.backend.dto.request.RoomTypeCreationRequest;
-import com.hotelmanagement.backend.dto.request.RoomTypeUpdateRequest;
 import com.hotelmanagement.backend.dto.request.RoomUpdateRequest;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.RoomResponse;
-import com.hotelmanagement.backend.dto.response.RoomTypeResponse;
 import com.hotelmanagement.backend.mapper.RoomMapper;
 import com.hotelmanagement.backend.service.RoomService;
-import com.hotelmanagement.backend.service.RoomTypeService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,18 +18,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("/rooms")
+@RequestMapping("/staff/rooms")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
-public class RoomController {
+public class StaffRoomController {
     RoomService roomService;
     RoomMapper roomMapper;
+
+    @PreAuthorize("hasAuthority('ROOM_CREATE')")
     @PostMapping("")
     public ApiResponse<RoomResponse> createRoom(@RequestBody @Valid RoomCreationRequest request) {
         RoomResponse roomResponse = roomMapper.toRoomResponse(roomService.createRoom(request));
@@ -41,6 +36,7 @@ public class RoomController {
         return ApiResponse.<RoomResponse>builder().data(roomResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOM_READ')")
     @GetMapping("/{id}")
     public ApiResponse<RoomResponse> getById(@PathVariable Long id) {
         RoomResponse roomResponse =roomMapper.toRoomResponse (roomService.getByid(id));
@@ -48,6 +44,7 @@ public class RoomController {
         return ApiResponse.<RoomResponse>builder().data(roomResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOM_READ')")
     @GetMapping
     public ApiResponse<List<RoomResponse>> getList(
             @RequestParam(defaultValue = "1") int page,
@@ -91,6 +88,7 @@ public class RoomController {
                 .build();
     }
 
+    @PreAuthorize("hasAuthority('ROOM_DELETE')")
     @DeleteMapping("/{id}")
     public ApiResponse<String> deleteRoom(@PathVariable Long id) {
         roomService.deleteById(id);
@@ -99,7 +97,7 @@ public class RoomController {
                 .build();
     }
 
-
+    @PreAuthorize("hasAuthority('ROOM_UPDATE')")
     @PatchMapping("/{id}")
     public ApiResponse<RoomResponse> updateRoom(@RequestBody RoomUpdateRequest request, @PathVariable Long id) {
         RoomResponse roomResponse = roomMapper.toRoomResponse(roomService.updateRoom(id, request));

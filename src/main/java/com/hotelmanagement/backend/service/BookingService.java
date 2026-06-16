@@ -17,6 +17,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,9 +42,10 @@ public class BookingService {
     PricingService pricingService;
     InvoicePromotionService invoicePromotionService;
     HousekeepingTaskService housekeepingTaskService;
+    PromotionService promotionService;
 
     @Transactional(rollbackFor = Exception.class)
-    public BookingCreationResponse create(BookingCreationRequest request) {
+    public BookingResponse create(BookingCreationRequest request) {
 
         validateBooking(request);
 
@@ -113,9 +115,11 @@ public class BookingService {
                     .promotionName(manualPromotion.getName())
                     .discountType(manualPromotion.getDiscountType())
                     .discountValue(manualPromotion.getDiscountValue())
-                    .discountAmount(manualPromotion.getDiscountValue())
+                    .discountAmount(pricing.getPromotionDiscount())
                     .build();
             invoicePromotionService.create(invoiceManualPromotionCreationData);
+
+            promotionService.increaseQuota(manualPromotion.getId());
         }
 
         PromotionResponse autoPromotion = pricing.getAutoPromotion();
@@ -127,18 +131,15 @@ public class BookingService {
                     .promotionName(autoPromotion.getName())
                     .discountType(autoPromotion.getDiscountType())
                     .discountValue(autoPromotion.getDiscountValue())
-                    .discountAmount(autoPromotion.getDiscountValue())
+                    .discountAmount(pricing.getAutoDiscount())
                     .build();
             invoicePromotionService.create(invoiceAutoPromotionCreationData);
+            promotionService.increaseQuota(autoPromotion.getId());
         }
 
         invoiceService.reCalculate(savedInvoice);
-        BookingCreationResponse response = BookingCreationResponse.builder()
-                .invoiceId(savedInvoice.getId())
-                .bookingId(savedBooking.getId())
-                .remainingAmount(savedInvoice.getRemainingAmount())
-                .build();
-        return response;
+
+        return bookingMapper.toBookingResponse(savedBooking);
     }
 
     public Page<Booking> getList(
@@ -153,13 +154,67 @@ public class BookingService {
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
     }
 
-    public BookingResponse getByid(String id) {
+    public BookingResponse getById(String id) {
         Booking booking = getEntityById(id);
+        return bookingMapper.toBookingResponse(booking);
+    }
 
+    public BookingResponse getMyBookingById(String userId, String id) {
+        Booking booking = getEntityById(id);
+        validateCurrentUserOwnsBooking(userId, booking);
+        return toMyBookingResponse(booking);
+    }
+
+    private BookingResponse toMyBookingResponse(Booking booking) {
         BookingResponse response = bookingMapper.toBookingResponse(booking);
+        if (booking.getInvoice() != null) {
+            Invoice invoice = booking.getInvoice();
+
+            BigDecimal roomAmount = invoice.getInvoiceItems()
+                    .stream()
+                    .filter(item -> item.getType() == InvoiceItemType.ROOM)
+                    .map(item -> item.getUnitPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal roomDiscountAmount = invoice.getDiscountAmount() == null
+                    ? BigDecimal.ZERO
+                    : invoice.getDiscountAmount();
+
+            BigDecimal roomFinalAmount = roomAmount.subtract(roomDiscountAmount);
+            if (roomFinalAmount.compareTo(BigDecimal.ZERO) < 0) {
+                roomFinalAmount = BigDecimal.ZERO;
+            }
+
+            BigDecimal depositPaidAmount = invoice.getPayments()
+                    .stream()
+                    .filter(payment -> payment.getStatus() == PaymentStatus.SUCCESS)
+                    .filter(payment -> payment.getType() == PaymentType.DEPOSIT)
+                    .map(Payment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal roomPaymentPaidAmount = invoice.getPayments()
+                    .stream()
+                    .filter(payment -> payment.getStatus() == PaymentStatus.SUCCESS)
+                    .filter(payment -> payment.getType() == PaymentType.ROOM_PAYMENT
+                            || payment.getType() == PaymentType.DEPOSIT)
+                    .map(Payment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            response.setRoomAmount(roomAmount);
+            response.setRoomDiscountAmount(roomDiscountAmount);
+            response.setRoomFinalAmount(roomFinalAmount);
+            response.setDepositPaidAmount(depositPaidAmount);
+            response.setRoomPaymentPaidAmount(roomPaymentPaidAmount);
+            response.setFinalAmount(
+                    invoice.getSubtotal()
+                            .subtract(invoice.getDiscountAmount())
+            );
+            response.setRemainingAmount(invoice.getRemainingAmount());
+        }
 
         Optional<HousekeepingTask> inspectionTaskOpt =
-                housekeepingTaskService.findInspectionTaskByBookingId(id);
+                housekeepingTaskService.findInspectionTaskByBookingId(booking.getId());
 
         if (inspectionTaskOpt.isPresent()) {
             HousekeepingTask inspectionTask = inspectionTaskOpt.get();
@@ -175,6 +230,15 @@ public class BookingService {
         }
 
         return response;
+    }
+
+    private void validateCurrentUserOwnsBooking(String userId, Booking booking) {
+
+        if (booking.getCustomer() == null
+                || booking.getCustomer().getId() == null
+                || !booking.getCustomer().getId().equals(userId)) {
+            throw new AppException(ErrorCode.BOOKING_NOT_FOUND);
+        }
     }
 
     private Booking createEntityBooking(BookingCreationData request){
@@ -274,8 +338,18 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
-    public Booking cancelBooking(String id) {
+    public Booking cancelBooking(String id, BookingCancelRequest request) {
         Booking booking = getEntityById(id);
+        return cancelBookingEntity(booking, request);
+    }
+
+    public Booking cancelMyBooking(String userId, String id, BookingCancelRequest request) {
+        Booking booking = getEntityById(id);
+        validateCurrentUserOwnsBooking(userId, booking);
+        return cancelBookingEntity(booking, request);
+    }
+
+    private Booking cancelBookingEntity(Booking booking, BookingCancelRequest request) {
         Invoice invoice = booking.getInvoice();
         booking.setStatus(BookingStatus.CANCELLED);
         invoice.setStatus(InvoiceStatus.CANCELLED);
@@ -387,4 +461,12 @@ public class BookingService {
         return pricingService.calculateBookingPrice(request);
     }
 
+    public Page<BookingResponse> getMyList(
+            String userId,
+            PageRequest request,
+            String q
+    ) {
+        return bookingRepository.getMyItemsWithParams(userId, q, request)
+                .map(this::toMyBookingResponse);
+    }
 }

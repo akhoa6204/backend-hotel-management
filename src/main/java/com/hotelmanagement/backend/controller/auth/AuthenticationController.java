@@ -1,4 +1,4 @@
-package com.hotelmanagement.backend.controller.common;
+package com.hotelmanagement.backend.controller.auth;
 
 import com.hotelmanagement.backend.dto.request.*;
 import com.hotelmanagement.backend.dto.response.ApiResponse;

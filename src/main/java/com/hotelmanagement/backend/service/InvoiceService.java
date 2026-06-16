@@ -62,6 +62,18 @@ public class InvoiceService {
         return invoiceRepository.findDetailById(id).orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
     }
 
+    public Invoice getMyInvoiceById(String id, String userId) {
+        Invoice invoice = getById(id);
+
+        if (invoice.getBooking() == null
+                || invoice.getBooking().getCustomer() == null
+                || !invoice.getBooking().getCustomer().getId().equals(userId)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return invoice;
+    }
+
     public void reCalculate(Invoice invoice){
 
         BigDecimal subTotal = BigDecimal.ZERO;

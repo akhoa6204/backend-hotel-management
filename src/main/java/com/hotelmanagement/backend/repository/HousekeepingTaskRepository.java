@@ -60,4 +60,30 @@ public interface HousekeepingTaskRepository extends JpaRepository<HousekeepingTa
             String staffId,
             HousekeepingTaskStatus status
     );
+    @Query("""
+            SELECT h
+            FROM HousekeepingTask h
+                JOIN h.room r
+            WHERE
+                h.staff.id = :staffId
+                AND (:status IS NULL OR h.status = :status)
+                AND (
+                    :q IS NULL
+                    OR :q = ''
+                    OR LOWER(r.name) LIKE LOWER(CONCAT('%', :q, '%'))
+                    OR LOWER(h.note) LIKE LOWER(CONCAT('%', :q, '%'))
+                )
+                AND (
+                    :bookingId IS NULL
+                    OR :bookingId = ''
+                    OR h.bookingId = :bookingId
+                )
+           """)
+    Page<HousekeepingTask> getMyItemsWithParams(
+            @Param("status") HousekeepingTaskStatus status,
+            @Param("q") String q,
+            @Param("bookingId") String bookingId,
+            @Param("staffId") String staffId,
+            Pageable pageable
+    );
 }

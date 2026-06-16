@@ -1,11 +1,10 @@
-package com.hotelmanagement.backend.controller.admin;
+package com.hotelmanagement.backend.controller.staff;
 
 import com.hotelmanagement.backend.dto.request.RoomTypeCreationRequest;
 import com.hotelmanagement.backend.dto.request.RoomTypeUpdateRequest;
 import com.hotelmanagement.backend.dto.response.ApiResponse;
 import com.hotelmanagement.backend.dto.response.MetaPagination;
 import com.hotelmanagement.backend.dto.response.RoomTypeResponse;
-import com.hotelmanagement.backend.mapper.RoomMapper;
 import com.hotelmanagement.backend.mapper.RoomTypeMapper;
 import com.hotelmanagement.backend.service.RoomTypeService;
 import jakarta.validation.Valid;
@@ -17,18 +16,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("/room-types")
+@RequestMapping("/staff/room-types")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
-public class RoomTypeController {
+public class StaffRoomTypeController {
     RoomTypeService roomTypeService;
     RoomTypeMapper roomTypeMapper;
 
+    @PreAuthorize("hasAuthority('ROOM_TYPE_CREATE')")
     @PostMapping("")
     public ApiResponse<RoomTypeResponse> createRoomType(@RequestBody @Valid RoomTypeCreationRequest request) {
         RoomTypeResponse roomTypeResponse = roomTypeService.createRoomType(request);
@@ -36,6 +34,7 @@ public class RoomTypeController {
         return ApiResponse.<RoomTypeResponse>builder().data(roomTypeResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOM_TYPE_READ')")
     @GetMapping("/{id}")
     public ApiResponse<RoomTypeResponse> getById(@PathVariable Long id) {
         RoomTypeResponse roomTypeResponse = roomTypeMapper.toRoomTypeResponse(roomTypeService.getRoomType(id));
@@ -43,6 +42,7 @@ public class RoomTypeController {
         return ApiResponse.<RoomTypeResponse>builder().data(roomTypeResponse).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOM_TYPE_READ')")
     @GetMapping("")
     public ApiResponse<List<RoomTypeResponse>> getList(
             @RequestParam (defaultValue = "1", required = false) int page,
@@ -62,6 +62,7 @@ public class RoomTypeController {
         return ApiResponse.<List<RoomTypeResponse>>builder().data(response.getContent()).pagination(meta).build();
     }
 
+    @PreAuthorize("hasAuthority('ROOM_TYPE_DELETE')")
     @DeleteMapping("/{id}")
     public ApiResponse<String> deleteRoomType(@PathVariable Long id) {
         roomTypeService.deleteRoomType(id);
@@ -71,6 +72,7 @@ public class RoomTypeController {
                 .build();
     }
 
+    @PreAuthorize("hasAuthority('ROOM_TYPE_UPDATE')")
     @PutMapping("/{id}")
     public ApiResponse<RoomTypeResponse> updateRoomType(@RequestBody RoomTypeUpdateRequest request, @PathVariable Long id) {
         RoomTypeResponse roomTypeResponse = roomTypeService.updateRoomType(id, request);

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Component
@@ -33,16 +34,20 @@ public class BookingScheduler {
         bookingRepository.saveAll(bookings);
     }
     @Scheduled(
-            cron = "0 */3 * * * *",
+            cron = "0 1 12 * * *",
             zone = "Asia/Ho_Chi_Minh"
     )
     @Transactional
-    public void updateNoShowBookingsWithPayment(){
+    public void updateNoShowBookingsWithPayment() {
         LocalDate today = LocalDate.now();
-        List<Booking> bookings = bookingRepository.findPaidNoShowBookings(today);
+
+        List<Booking> bookings =
+                bookingRepository.findPaidNoShowBookings(today);
+
         for (Booking booking : bookings) {
             booking.setStatus(BookingStatus.NO_SHOW);
         }
+
         bookingRepository.saveAll(bookings);
     }
 }

@@ -22,7 +22,7 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
         FROM Booking b
         WHERE
             b.room.id = :roomId
-            AND b.status <> 'CANCELLED'
+            AND b.status NOT IN ('CANCELLED', 'NO_SHOW')
             AND (
                 :checkInDate < b.checkOutDate
                 AND :checkOutDate > b.checkInDate
@@ -58,8 +58,7 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
         SELECT b
         FROM Booking b
         WHERE
-            (b.status = 'PENDING'
-            OR b.status = 'CONFIRMED')
+            b.status = 'CONFIRMED'
             AND b.checkOutDate <= :today
             AND EXISTS (
                 SELECT p
@@ -70,6 +69,7 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
                     AND (
                         p.type = 'DEPOSIT'
                         OR p.type = 'FULL_PAYMENT'
+                        OR p.type = 'ROOM_PAYMENT'
                     )
             )
     """)
@@ -99,15 +99,17 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
         select count(b)
         from Booking b
         where b.checkInDate = :date
+            AND b.status <> 'NO_SHOW'
     """)
     long countTodayBookings(LocalDate date);
 
-    Page<Booking> findByCheckInDate(
+    Page<Booking> findByCheckInDateAndStatusNot(
             LocalDate date,
+            BookingStatus status,
             Pageable pageable
     );
 
-    Page<Booking> findByCheckOutDate(LocalDate date, Pageable pageable);
+    Page<Booking> findByCheckOutDateAndStatusNot(LocalDate date, BookingStatus status, Pageable pageable);
 
     @Query("""
         SELECT COUNT(DISTINCT b.room.id)
@@ -140,5 +142,26 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
             LocalDate startDate,
             LocalDate endDate,
             BookingStatus status
+    );
+
+    @Query("""
+    SELECT b
+    FROM Booking b
+    WHERE
+        b.customer.id = :customerId
+        AND b.status <> 'NO_SHOW'
+        AND (
+            :q IS NULL
+            OR :q = ''
+            OR LOWER(b.bookingCode) LIKE LOWER(CONCAT('%', :q, '%'))
+            OR LOWER(b.guestName) LIKE LOWER(CONCAT('%', :q, '%'))
+            OR LOWER(b.guestPhone) LIKE LOWER(CONCAT('%', :q, '%'))
+            OR LOWER(b.guestEmail) LIKE LOWER(CONCAT('%', :q, '%'))
+        )
+    """)
+    Page<Booking> getMyItemsWithParams(
+            @Param("customerId") String customerId,
+            @Param("q") String q,
+            Pageable pageable
     );
 }

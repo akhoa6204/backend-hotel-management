@@ -13,5 +13,5 @@ import lombok.experimental.FieldDefaults;
 public class RoomShortResponse {
     Long id;
     String name;
-    RoomTypeShortResponse roomType;
+    RoomTypeResponse roomType;
 }
