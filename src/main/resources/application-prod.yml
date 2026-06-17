@@ -28,8 +28,8 @@ spring:
 
 jwt:
   signer-key: ${JWT_SECRET}
-  valid-duration:
-  refreshable-duration:
+  valid-duration: ${JWT_VALID_DURATION:604800}
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION:604800}
 app:
   cors:
     origin: ${CORS_ORIGIN}
@@ -37,4 +37,6 @@ app:
 sepay:
   merchant-id: ${SEPAY_MERCHANT_ID}
   secret-key: ${SEPAY_SECRET_KEY}
-  env:
+  env: ${SEPAY_ENV:production}
+  bank-account: ${SEPAY_BANK_ACCOUNT}
+  bank-code: ${SEPAY_BANK_CODE}

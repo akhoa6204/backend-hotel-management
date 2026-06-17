@@ -23,8 +23,8 @@ public class SePayService {
             throw new RuntimeException("amount must be positive");
         }
 
-        String accountNumber = "05626027210";
-        String bankCode = "TPB";
+        String accountNumber = properties.getBankAccount();
+        String bankCode = properties.getBankCode();
         String template = "compact";
         String download = "false";
         String transferDescription = description != null && !description.isBlank()
