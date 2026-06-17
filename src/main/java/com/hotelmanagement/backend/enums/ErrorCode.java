@@ -61,6 +61,8 @@ public enum ErrorCode {
     INVALID_BOOKING_STATUS(2111, "Invalid booking status", HttpStatus.BAD_REQUEST),
     PAYMENT_NOT_TRANSFER(2112, "Payment is not bank transfer", HttpStatus.BAD_REQUEST),
     PAYMENT_INVALID_STATUS(2113, "Payment status is invalid", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_CANCELLED(2114, "Booking is already cancelled", HttpStatus.BAD_REQUEST),
+    CANCEL_REASON_ALREADY_EXISTS(2115, "Cancel reason already exists", HttpStatus.BAD_REQUEST),
 
     HOUSEKEEPING_TASK_NOT_FOUND(2201, "Housekeeping task not found", HttpStatus.NOT_FOUND),
     HOUSEKEEPING_TASK_ALREADY_EXISTS(2202, "Housekeeping task is already exists", HttpStatus.BAD_REQUEST),

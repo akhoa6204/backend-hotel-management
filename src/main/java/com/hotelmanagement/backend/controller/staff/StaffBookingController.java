@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class StaffBookingController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('BOOKING_READ')")
     ApiResponse<BookingResponse> getById(@PathVariable String id) {
-        BookingResponse result = bookingService.getById(id);
+        BookingResponse result = bookingService.getStaffBookingById(id);
 
         return ApiResponse.<BookingResponse>builder()
                 .data(result)
@@ -110,7 +111,8 @@ public class StaffBookingController {
     @PatchMapping("/{id}/cancelled")
     @PreAuthorize("hasAuthority('BOOKING_UPDATE')")
     ApiResponse<BookingResponse> cancelledBooking(@PathVariable String id, @RequestBody @Valid BookingCancelRequest request) {
-        BookingResponse result = bookingMapper.toBookingResponse(bookingService.cancelBooking(id, request));
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        BookingResponse result = bookingMapper.toBookingResponse(bookingService.cancelBooking(userId, id, request));
         return ApiResponse.<BookingResponse>builder()
                 .data(result)
                 .build();

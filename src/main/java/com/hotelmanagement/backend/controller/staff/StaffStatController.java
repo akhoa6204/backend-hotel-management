@@ -2,6 +2,7 @@ package com.hotelmanagement.backend.controller.staff;
 
 import com.hotelmanagement.backend.dto.response.*;
 import com.hotelmanagement.backend.service.StatService;
+import com.hotelmanagement.backend.service.ReviewService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,12 +23,21 @@ import java.util.List;
 public class StaffStatController {
 
     StatService statService;
+    ReviewService reviewService;
 
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','RECEPTIONIST')")
     @GetMapping("/overview")
     public ApiResponse<StatsOverviewResponse> getOverview() {
         return ApiResponse.<StatsOverviewResponse>builder()
                 .data(statService.getOverview())
+                .build();
+    }
+
+    @PreAuthorize("hasAuthority('REVIEW_READ')")
+    @GetMapping("/reviews")
+    public ApiResponse<ReviewStatsResponse> getReviewStats() {
+        return ApiResponse.<ReviewStatsResponse>builder()
+                .data(reviewService.getStats())
                 .build();
     }
 

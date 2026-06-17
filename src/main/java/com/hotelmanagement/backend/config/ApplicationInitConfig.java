@@ -84,7 +84,8 @@ public class ApplicationInitConfig {
                     "ROOM_TYPE_IMAGE",
                     "SHIFT",
                     "STAFF_SHIFT_ASSIGNMENT",
-                    "USER"
+                    "USER",
+                    "REVIEW"
             };
 
             String[] actions = {
@@ -147,6 +148,8 @@ public class ApplicationInitConfig {
             addPermission(userPermissions, allPermissions, "USER_READ");
             addPermission(userPermissions, allPermissions, "AMENITY_READ");
             addPermission(userPermissions, allPermissions, "INVOICE_READ");
+            addPermission(userPermissions, allPermissions, "REVIEW_READ");
+            addPermission(userPermissions, allPermissions, "REVIEW_CREATE");
 
             Role userRole = roleRepository.save(
                     Role.builder()

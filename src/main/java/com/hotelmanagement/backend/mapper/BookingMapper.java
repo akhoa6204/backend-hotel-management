@@ -19,5 +19,6 @@ public interface BookingMapper {
             target = "invoiceId",
             source = "invoice.id"
     )
+    @Mapping(target = "hasReview", expression = "java(booking.getReview() != null)")
     BookingResponse toBookingResponse(Booking booking);
 }

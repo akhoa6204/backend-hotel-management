@@ -39,11 +39,12 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 SELECT b.id
                 FROM Booking b
                 WHERE b.room.id = r.id
-                    AND b.checkInDate <= :endDate
-                    AND b.checkOutDate >= :startDate
+                    AND b.checkInDate < :endDate
+                    AND b.checkOutDate > :startDate
                     AND b.status NOT IN (
                         com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
-                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT
+                        com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT,
+                        com.hotelmanagement.backend.enums.BookingStatus.NO_SHOW
                     )
             )
     """)
@@ -64,8 +65,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 SELECT b.id
                 FROM Booking b
                 WHERE b.room.id = r.id
-                    AND b.checkInDate <= :endDate
-                    AND b.checkOutDate >= :startDate
+                    AND b.checkInDate < :endDate
+                    AND b.checkOutDate > :startDate
                     AND b.status NOT IN (
                         com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
                         com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT,
@@ -87,8 +88,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 SELECT b.id
                 FROM Booking b
                 WHERE b.room.id = r.id
-                    AND b.checkInDate <= :endDate
-                    AND b.checkOutDate >= :startDate
+                    AND b.checkInDate < :endDate
+                    AND b.checkOutDate > :startDate
                     AND b.status NOT IN (
                         com.hotelmanagement.backend.enums.BookingStatus.CANCELLED,
                         com.hotelmanagement.backend.enums.BookingStatus.CHECKED_OUT,

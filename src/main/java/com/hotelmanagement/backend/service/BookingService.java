@@ -43,7 +43,7 @@ public class BookingService {
     InvoicePromotionService invoicePromotionService;
     HousekeepingTaskService housekeepingTaskService;
     PromotionService promotionService;
-
+    CancelReasonRepository cancelReasonRepository;
     @Transactional(rollbackFor = Exception.class)
     public BookingResponse create(BookingCreationRequest request) {
 
@@ -139,7 +139,13 @@ public class BookingService {
 
         invoiceService.reCalculate(savedInvoice);
 
-        return bookingMapper.toBookingResponse(savedBooking);
+        BookingResponse response = bookingMapper.toBookingResponse(savedBooking);
+        response.setFinalAmount(
+                savedInvoice.getSubtotal()
+                        .subtract(savedInvoice.getDiscountAmount())
+        );
+        response.setRemainingAmount(savedInvoice.getRemainingAmount());
+        return response;
     }
 
     public Page<Booking> getList(
@@ -157,6 +163,28 @@ public class BookingService {
     public BookingResponse getById(String id) {
         Booking booking = getEntityById(id);
         return bookingMapper.toBookingResponse(booking);
+    }
+
+    public BookingResponse getStaffBookingById(String id) {
+        Booking booking = getEntityById(id);
+        BookingResponse response = bookingMapper.toBookingResponse(booking);
+
+        Optional<HousekeepingTask> inspectionTaskOpt =
+                housekeepingTaskService.findInspectionTaskByBookingId(booking.getId());
+
+        if (inspectionTaskOpt.isPresent()) {
+            HousekeepingTask inspectionTask = inspectionTaskOpt.get();
+
+            response.setInspectionTaskId(inspectionTask.getId());
+            response.setInspected(
+                    inspectionTask.getStatus() == HousekeepingTaskStatus.COMPLETED
+            );
+        } else {
+            response.setInspectionTaskId(null);
+            response.setInspected(false);
+        }
+
+        return response;
     }
 
     public BookingResponse getMyBookingById(String userId, String id) {
@@ -233,7 +261,6 @@ public class BookingService {
     }
 
     private void validateCurrentUserOwnsBooking(String userId, Booking booking) {
-
         if (booking.getCustomer() == null
                 || booking.getCustomer().getId() == null
                 || !booking.getCustomer().getId().equals(userId)) {
@@ -338,21 +365,43 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
-    public Booking cancelBooking(String id, BookingCancelRequest request) {
+    @Transactional
+    public Booking cancelBooking(String userId, String id, BookingCancelRequest request) {
         Booking booking = getEntityById(id);
-        return cancelBookingEntity(booking, request);
+        User user = userService.getById(userId);
+        return cancelBookingEntity(user, booking, request);
     }
 
+    @Transactional
     public Booking cancelMyBooking(String userId, String id, BookingCancelRequest request) {
         Booking booking = getEntityById(id);
         validateCurrentUserOwnsBooking(userId, booking);
-        return cancelBookingEntity(booking, request);
+        User user = userService.getById(userId);
+        return cancelBookingEntity(user, booking, request);
     }
 
-    private Booking cancelBookingEntity(Booking booking, BookingCancelRequest request) {
+    private Booking cancelBookingEntity(User user, Booking booking, BookingCancelRequest request) {
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new AppException(ErrorCode.BOOKING_ALREADY_CANCELLED);
+        }
         Invoice invoice = booking.getInvoice();
         booking.setStatus(BookingStatus.CANCELLED);
-        invoice.setStatus(InvoiceStatus.CANCELLED);
+        if (invoice != null) {
+            invoice.setStatus(InvoiceStatus.CANCELLED);
+        }
+
+        if (cancelReasonRepository.existsByBookingId(booking.getId())) {
+            throw new AppException(ErrorCode.CANCEL_REASON_ALREADY_EXISTS);
+        }
+        boolean isAdmin = !user.getRole().getName().equals(UserRole.USER.name());
+        CancelReason cancelReason = CancelReason.builder()
+                .booking(booking)
+                .reason(request.getReason())
+                .cancelledBy(user)
+                .staffCancel(isAdmin)
+                .build();
+        cancelReasonRepository.save(cancelReason);
+        booking.setCancelReason(cancelReason);
         return bookingRepository.save(booking);
     }
     @Transactional

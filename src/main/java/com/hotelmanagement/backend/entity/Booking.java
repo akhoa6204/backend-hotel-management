@@ -1,20 +1,15 @@
 package com.hotelmanagement.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hotelmanagement.backend.enums.BookingStatus;
-import com.hotelmanagement.backend.enums.DiscountScope;
-import com.hotelmanagement.backend.enums.DiscountType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Date;
 
 @Getter
 @Setter
@@ -46,6 +41,12 @@ public class Booking {
 
     @OneToOne(mappedBy = "booking")
     Invoice invoice;
+
+    @OneToOne(mappedBy = "booking")
+    Review review;
+
+    @OneToOne(mappedBy = "booking")
+    CancelReason cancelReason;
 
     LocalDate checkInDate;
     LocalDate checkOutDate;

@@ -1,19 +1,12 @@
 package com.hotelmanagement.backend.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.hotelmanagement.backend.entity.Room;
-import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.enums.BookingStatus;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
@@ -51,4 +44,7 @@ public class BookingResponse {
     BigDecimal roomFinalAmount;
     BigDecimal depositPaidAmount;
     BigDecimal roomPaymentPaidAmount;
+
+    boolean hasReview;
+    CancelReasonResponse cancelReason;
 }
