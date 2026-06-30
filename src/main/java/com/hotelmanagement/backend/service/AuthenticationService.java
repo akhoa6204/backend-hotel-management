@@ -1,19 +1,19 @@
 package com.hotelmanagement.backend.service;
 
-import com.hotelmanagement.backend.dto.request.AuthenticationRequest;
-import com.hotelmanagement.backend.dto.request.IntrospectRequest;
-import com.hotelmanagement.backend.dto.request.LogoutRequest;
-import com.hotelmanagement.backend.dto.request.RefreshRequest;
+import com.hotelmanagement.backend.dto.request.*;
 import com.hotelmanagement.backend.dto.response.AuthenticationResponse;
 import com.hotelmanagement.backend.dto.response.IntrospectResponse;
 import com.hotelmanagement.backend.entity.InvalidatedToken;
+import com.hotelmanagement.backend.entity.PasswordResetToken;
 import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.enums.ErrorCode;
 import com.hotelmanagement.backend.mapper.UserMapper;
 import com.hotelmanagement.backend.repository.InvalidatedTokenRepository;
+import com.hotelmanagement.backend.repository.PasswordResetTokenRepository;
 import com.hotelmanagement.backend.repository.UserRepository;
+import com.hotelmanagement.backend.template.PasswordResetEmailTemplate;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -31,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -43,6 +44,12 @@ public class AuthenticationService {
     InvalidatedTokenRepository invalidatedTokenRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    PasswordResetTokenRepository passwordResetTokenRepository;
+    EmailService emailService;
+
+    @NonFinal
+    @Value("${app.cors.origin}")
+    String FRONTEND_ORIGIN;
 
     @NonFinal
     @Value("${jwt.signer-key}")
@@ -196,5 +203,57 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         return signedJWT;
+    }
+
+    public void requestPasswordReset(PasswordResetRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        String token = generatePasswordResetToken();
+
+        PasswordResetToken passwordResetToken = PasswordResetToken.builder()
+                .token(token)
+                .expirationDateTime(LocalDateTime.now().plusMinutes(15))
+                .user(user)
+                .build();
+
+        passwordResetTokenRepository.save(passwordResetToken);
+
+        String resetUrl =
+                FRONTEND_ORIGIN + "/reset-password?token=" + token;
+
+        String html =
+                PasswordResetEmailTemplate.build(resetUrl);
+
+        emailService.sendHtmlEmail(
+                user.getEmail(),
+                "Đặt lại mật khẩu tài khoản Skyline Hotel",
+                html
+        );
+    }
+
+    private String generatePasswordResetToken() {
+        String token;
+        do {
+            token = String.format("%06d", new Random().nextInt(1_000_000));
+        } while (passwordResetTokenRepository.existsByToken(token));
+
+        return token;
+    }
+
+    public void resetPassword(PasswordResetConfirmRequest request) {
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+
+        if (passwordResetToken.getExpirationDateTime().isBefore(LocalDateTime.now())) {
+            passwordResetTokenRepository.delete(passwordResetToken);
+            throw new AppException(ErrorCode.INVALID_TOKEN);
+        }
+
+        User user = passwordResetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+
+        passwordResetTokenRepository.delete(passwordResetToken);
     }
 }

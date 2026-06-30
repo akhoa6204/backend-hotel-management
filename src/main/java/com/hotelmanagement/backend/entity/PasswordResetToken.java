@@ -7,8 +7,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -17,27 +17,24 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class PasswordResetToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
-    String fullName;
-    String email;
-    String phone;
-    String password;
-    LocalDate dob;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(nullable = false, unique = true)
+    String token;
+
+    @Column(nullable = false)
+    LocalDateTime expirationDateTime;
 
     @CreationTimestamp
-    Date createdAt;
-    @UpdateTimestamp
-    Date updatedAt;
+    LocalDateTime createdAt;
 
-    boolean active;
+    @UpdateTimestamp
+    LocalDateTime updatedAt;
 
     @ManyToOne
-    @JoinColumn(name = "roleId")
-    Role role;
-
-    @OneToMany(mappedBy = "user")
-    Set<PasswordResetToken> passwordResetTokens;
+    @JoinColumn(name = "userId")
+    User user;
 }

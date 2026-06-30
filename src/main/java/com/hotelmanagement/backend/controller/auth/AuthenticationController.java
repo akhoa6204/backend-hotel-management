@@ -44,12 +44,10 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     ApiResponse<UserResponse> register(@RequestBody @Valid UserCreationRequest request) {
-        ApiResponse<UserResponse> response = new ApiResponse<>();
 
         UserResponse userResponse = userMapper.toUserResponse(userService.createUser(request));
 
-        response.setData(userResponse);
-        return response;
+        return ApiResponse.<UserResponse>builder().data(userResponse).build();
 
     }
 
@@ -79,6 +77,22 @@ public class AuthenticationController {
         return ApiResponse.<AuthenticationResponse>builder()
                 .data(response)
                 .message("Successfully refreshed token")
+                .build();
+    }
+
+    @PostMapping("/password-reset-requests")
+    ApiResponse<String> requestPasswordReset(@RequestBody @Valid PasswordResetRequest request) {
+        authenticationService.requestPasswordReset(request);
+        return ApiResponse.<String>builder()
+                .message("Successfully created password reset request")
+                .build();
+    }
+
+    @PostMapping("/password-resets")
+    ApiResponse<String> resetPassword(@RequestBody @Valid PasswordResetConfirmRequest request) {
+        authenticationService.resetPassword(request);
+        return ApiResponse.<String>builder()
+                .message("Successfully reset password")
                 .build();
     }
 }

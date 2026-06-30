@@ -57,7 +57,11 @@ public class BookingService {
                 ? userService.getById(request.getCustomerId())
                 : null;
 
-        Room room = roomService.findRoomAvailable(request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate());
+        Room room = roomService.findRoomAvailableForUpdate(
+                request.getRoomId(),
+                request.getCheckInDate(),
+                request.getCheckOutDate()
+        );
 
         QuoteRequest quoteRequest = QuoteRequest.builder()
                 .roomId(request.getRoomId())
@@ -285,15 +289,6 @@ public class BookingService {
             );
         }
 
-        if (bookingRepository.existsBookingOverlap(
-                request.getRoomId(),
-                request.getCheckInDate(),
-                request.getCheckOutDate()
-        )) {
-            throw new AppException(
-                    ErrorCode.BOOKING_ALREADY_EXISTS
-            );
-        }
     }
 
     public Booking updateBooking(String id, BookingUpdateRequest request) {

@@ -107,6 +107,18 @@ public class RoomService {
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_ALREADY_EXISTS));
     }
 
+    public Room findRoomAvailableForUpdate(Long id, LocalDate startDate, LocalDate endDate){
+        Room room = roomRepository.findByIdAndActiveTrueForUpdate(id)
+                .orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+
+        boolean unavailable = roomRepository.roomAvailable(id, startDate, endDate).isEmpty();
+        if (unavailable) {
+            throw new AppException(ErrorCode.BOOKING_ALREADY_EXISTS);
+        }
+
+        return room;
+    }
+
     public Optional<Long> findFirstAvailableRoomIdByRoomType(
             Long roomTypeId,
             LocalDate startDate,

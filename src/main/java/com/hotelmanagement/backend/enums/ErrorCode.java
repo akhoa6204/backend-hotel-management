@@ -20,7 +20,8 @@ public enum ErrorCode {
 
     PASSWORD_TOO_SHORT(1301, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
     PASSWORD_INCORRECT(1302, "Current password is incorrect", HttpStatus.BAD_REQUEST),
-    PASSWORD_(1301, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
+    INVALID_TOKEN(1303, "Invalid or expired token", HttpStatus.BAD_REQUEST),
+    PASSWORD_RESET_TOKEN_NOT_FOUND(1304, "Password reset token not found", HttpStatus.NOT_FOUND),
 
     PHONE_REQUIRED(1401, "Phone is required", HttpStatus.BAD_REQUEST),
     PHONE_INVALID(1402, "Phone must be 10 digits", HttpStatus.BAD_REQUEST),

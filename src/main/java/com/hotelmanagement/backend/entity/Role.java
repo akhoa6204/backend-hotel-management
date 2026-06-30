@@ -21,6 +21,6 @@ public class Role {
     @OneToMany(mappedBy = "role")
     Set<User> users;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     Set<Permisson> permissions;
 }

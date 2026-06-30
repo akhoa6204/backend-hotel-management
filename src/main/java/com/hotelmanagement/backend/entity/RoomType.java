@@ -35,10 +35,10 @@ public class RoomType {
     @UpdateTimestamp
     Date updatedAt;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     Set<Amenity> amenities;
 
-    @OneToMany(mappedBy = "roomType", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "roomType", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     Set<RoomTypeImage> roomTypeImages;
 
     @OneToMany(mappedBy = "roomType")
