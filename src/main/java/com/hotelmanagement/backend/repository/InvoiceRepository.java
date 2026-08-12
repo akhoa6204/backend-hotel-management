@@ -27,7 +27,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice,String> {
     @EntityGraph(attributePaths = {
             "invoiceItems",
             "invoiceItems.extraService",
-            "payments"
+            "payments",
+            "invoicePromotions"
     })
     Optional<Invoice> findDetailById(String id);
 

@@ -62,7 +62,7 @@ public class ApplicationInitConfig {
 
         return args -> {
 
-            if (userRepository.findByEmail(ADMIN_EMAIL).isPresent()) {
+            if (userRepository.existsByEmail(ADMIN_EMAIL)) {
                 return;
             }
 
@@ -167,6 +167,14 @@ public class ApplicationInitConfig {
                             .build()
             );
 
+            Role managerRole = roleRepository.save(
+                    Role.builder()
+                            .name(UserRole.MANAGER.name())
+                            .description("Manager role")
+                            .permissions(new HashSet<>(allPermissions))
+                            .build()
+            );
+
             User admin = User.builder()
                     .fullName("System Admin")
                     .email(ADMIN_EMAIL)
@@ -176,6 +184,18 @@ public class ApplicationInitConfig {
                     .build();
 
             userRepository.save(admin);
+
+            for (int i = 1; i <= 2; i++) {
+                userRepository.save(
+                        User.builder()
+                                .fullName("Manager " + i)
+                                .email("manager" + i + "@diamondsea.hotel.com")
+                                .password(passwordEncoder.encode("123456"))
+                                .role(managerRole)
+                                .active(true)
+                                .build()
+                );
+            }
 
             HashSet<Amenity> allAmenities = new HashSet<>();
 
@@ -444,35 +464,52 @@ public class ApplicationInitConfig {
                             .build()
             );
 
-            User housekeepingUser = User.builder()
-                    .fullName("Housekeeping Staff")
-                    .email("housekeeping@diamondsea.hotel.com")
-                    .password(passwordEncoder.encode("123456"))
-                    .role(housekeepingRole)
-                    .active(true)
-                    .build();
+            User[] housekeepingUsers = new User[3];
+            for (int i = 0; i < housekeepingUsers.length; i++) {
+                housekeepingUsers[i] = userRepository.save(
+                        User.builder()
+                                .fullName("Housekeeping Staff " + (i + 1))
+                                .email(i == 0
+                                        ? "housekeeping@diamondsea.hotel.com"
+                                        : "housekeeping" + (i + 1) + "@diamondsea.hotel.com")
+                                .password(passwordEncoder.encode("123456"))
+                                .role(housekeepingRole)
+                                .active(true)
+                                .build()
+                );
+            }
 
-            userRepository.save(housekeepingUser);
+            User[] receptionistUsers = new User[3];
+            for (int i = 0; i < receptionistUsers.length; i++) {
+                receptionistUsers[i] = userRepository.save(
+                        User.builder()
+                                .fullName("Receptionist Staff " + (i + 1))
+                                .email(i == 0
+                                        ? "reception@diamondsea.hotel.com"
+                                        : "reception" + (i + 1) + "@diamondsea.hotel.com")
+                                .password(passwordEncoder.encode("123456"))
+                                .role(receptionistRole)
+                                .active(true)
+                                .build()
+                );
+            }
 
-            User receptionistUser = User.builder()
-                    .fullName("Receptionist Staff")
-                    .email("reception@diamondsea.hotel.com")
-                    .password(passwordEncoder.encode("123456"))
-                    .role(receptionistRole)
-                    .active(true)
-                    .build();
+            for (int i = 1; i <= 3; i++) {
+                userRepository.save(
+                        User.builder()
+                                .fullName("Customer User " + i)
+                                .email(i == 1
+                                        ? "user@diamondsea.hotel.com"
+                                        : "user" + i + "@diamondsea.hotel.com")
+                                .password(passwordEncoder.encode("123456"))
+                                .role(userRole)
+                                .active(true)
+                                .build()
+                );
+            }
 
-            userRepository.save(receptionistUser);
-
-            User normalUser = User.builder()
-                    .fullName("Customer User")
-                    .email("user@diamondsea.hotel.com")
-                    .password(passwordEncoder.encode("123456"))
-                    .role(userRole)
-                    .active(true)
-                    .build();
-
-            userRepository.save(normalUser);
+            User housekeepingUser = housekeepingUsers[0];
+            User receptionistUser = receptionistUsers[0];
 
             Shift morningShift = shiftRepository.save(
                     Shift.builder()

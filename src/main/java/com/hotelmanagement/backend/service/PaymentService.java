@@ -27,6 +27,7 @@ import lombok.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -78,6 +79,7 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
+    @Transactional
     public Payment update(Long id, PaymentUpdateRequest request) {
         Payment payment = getById(id);
         paymentMapper.updatePayment(payment, request);
@@ -125,6 +127,7 @@ public class PaymentService {
     }
 
 
+    @Transactional
     public PaymentResponse handleSePayWebhook(Map<String, Object> payload) {
         String code = getStringValue(payload, "code");
 
@@ -148,6 +151,14 @@ public class PaymentService {
 
         Long paymentId = Long.valueOf(matcher.group(1));
         Payment payment = getById(paymentId);
+
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            return paymentMapper.toPaymentResponse(payment);
+        }
+
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new AppException(ErrorCode.PAYMENT_INVALID_STATUS);
+        }
 
         String transactionCode = getStringValue(payload, "referenceCode");
         if (transactionCode == null || transactionCode.isBlank()) {
