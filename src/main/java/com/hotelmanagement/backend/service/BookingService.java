@@ -8,6 +8,7 @@ import com.hotelmanagement.backend.dto.response.PricingResultResponse;
 import com.hotelmanagement.backend.dto.response.PromotionResponse;
 import com.hotelmanagement.backend.entity.*;
 import com.hotelmanagement.backend.enums.*;
+import com.hotelmanagement.backend.event.BookingConfirmedEvent;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.mapper.BookingMapper;
 import com.hotelmanagement.backend.repository.*;
@@ -17,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,8 @@ public class BookingService {
     HousekeepingTaskService housekeepingTaskService;
     PromotionService promotionService;
     CancelReasonRepository cancelReasonRepository;
+    ApplicationEventPublisher eventPublisher;
+
     @Transactional(rollbackFor = Exception.class)
     public BookingResponse create(BookingCreationRequest request) {
 
@@ -82,6 +86,9 @@ public class BookingService {
                 .guestName(request.getGuestName())
                 .guestPhone(request.getGuestPhone())
                 .guestEmail(request.getGuestEmail())
+                .emailLocale(request.getLocale() == null
+                        ? BookingEmailLocale.VI
+                        : request.getLocale())
                 .build();
 
         Booking savedBooking = createEntityBooking(bookingCreationData);
@@ -191,8 +198,10 @@ public class BookingService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public BookingResponse getMyBookingById(String userId, String id) {
-        Booking booking = getEntityById(id);
+        Booking booking = bookingRepository.findDetailByIdAndStatusNot(id, BookingStatus.NO_SHOW)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
         validateCurrentUserOwnsBooking(userId, booking);
         return toMyBookingResponse(booking);
     }
@@ -341,7 +350,13 @@ public class BookingService {
     }
     @Transactional
     public Booking confirmBooking(String id){
-        Booking  booking = getEntityById(id);
+        Booking booking = bookingRepository.findByIdForConfirmation(id, BookingStatus.NO_SHOW)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            return booking;
+        }
+
         Invoice invoice = booking.getInvoice();
         Set<Payment> payments = invoice.getPayments();
         if (booking.getStatus() != BookingStatus.PENDING) {
@@ -357,7 +372,9 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CONFIRMED);
         invoice.setStatus(InvoiceStatus.ACTIVE);
-        return bookingRepository.save(booking);
+        Booking confirmedBooking = bookingRepository.save(booking);
+        eventPublisher.publishEvent(new BookingConfirmedEvent(confirmedBooking.getId()));
+        return confirmedBooking;
     }
 
     @Transactional
@@ -505,6 +522,7 @@ public class BookingService {
         return pricingService.calculateBookingPrice(request);
     }
 
+    @Transactional(readOnly = true)
     public Page<BookingResponse> getMyList(
             String userId,
             PageRequest request,

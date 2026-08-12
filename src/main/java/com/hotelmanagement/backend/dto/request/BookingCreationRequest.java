@@ -1,5 +1,6 @@
 package com.hotelmanagement.backend.dto.request;
 
+import com.hotelmanagement.backend.enums.BookingEmailLocale;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -34,7 +35,10 @@ public class BookingCreationRequest {
     @Pattern(regexp = "^[0-9]{10}$", message = "PHONE_INVALID")
     String guestPhone;
 
+    @Email(message = "EMAIL_INVALID")
     String guestEmail;
 
     String promotionCode;
+
+    BookingEmailLocale locale;
 }

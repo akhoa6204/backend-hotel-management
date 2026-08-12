@@ -69,6 +69,11 @@ public enum ErrorCode {
     HOUSEKEEPING_TASK_ALREADY_EXISTS(2202, "Housekeeping task is already exists", HttpStatus.BAD_REQUEST),
     INSPECTION_TASK_REQUIRED_FOR_CHECKOUT(2203, "Inspection task must be completed before checkout", HttpStatus.BAD_REQUEST),
 
+    SHIFT_NOT_FOUND(2301, "Shift not found", HttpStatus.NOT_FOUND),
+    SHIFT_ASSIGNMENT_CONFLICT(2302, "Staff shift assignment conflicts with an existing assignment", HttpStatus.CONFLICT),
+    SHIFT_STAFF_INELIGIBLE(2303, "Employee is not eligible for staff scheduling", HttpStatus.BAD_REQUEST),
+    SHIFT_IMPORT_INVALID(2304, "Staff schedule import contains invalid rows", HttpStatus.BAD_REQUEST),
+
     UNAUTHENTICATED(2001, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(2002, "You do not have permission", HttpStatus.FORBIDDEN),
     PERMISSION_NOT_FOUND(2003, "Permission not found", HttpStatus.NOT_FOUND),
