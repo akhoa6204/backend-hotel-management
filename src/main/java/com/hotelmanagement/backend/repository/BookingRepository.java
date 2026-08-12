@@ -5,7 +5,9 @@ import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.enums.BookingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,6 +16,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking,String> {
@@ -41,7 +45,10 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
         b.status <> 'NO_SHOW'
         AND (
             :q IS NULL
+            OR :q = ''
             OR LOWER(b.bookingCode)
+                LIKE LOWER(CONCAT('%', :q, '%'))
+            OR LOWER(b.guestName)
                 LIKE LOWER(CONCAT('%', :q, '%'))
         )
 """)
@@ -51,6 +58,32 @@ public interface BookingRepository extends JpaRepository<Booking,String> {
     );
 
     Optional<Booking> findByIdAndStatusNot(
+            String id,
+            BookingStatus status
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select b from Booking b where b.id = :id and b.status <> :excludedStatus")
+    Optional<Booking> findByIdForConfirmation(
+            @Param("id") String id,
+            @Param("excludedStatus") BookingStatus excludedStatus
+    );
+
+    @EntityGraph(attributePaths = {
+            "customer",
+            "room.roomType.roomTypeImages",
+            "invoice.invoiceItems.extraService",
+            "invoice.invoicePromotions",
+            "invoice.payments"
+    })
+    @Query("select b from Booking b where b.id = :id")
+    Optional<Booking> findConfirmationEmailDetailById(@Param("id") String id);
+
+    @EntityGraph(attributePaths = {
+            "invoice.invoiceItems",
+            "invoice.payments"
+    })
+    Optional<Booking> findDetailByIdAndStatusNot(
             String id,
             BookingStatus status
     );

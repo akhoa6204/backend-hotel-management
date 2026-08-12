@@ -1,6 +1,7 @@
 package com.hotelmanagement.backend.entity;
 
 import com.hotelmanagement.backend.enums.BookingStatus;
+import com.hotelmanagement.backend.enums.BookingEmailLocale;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -59,6 +60,11 @@ public class Booking {
     String guestName;
     String guestPhone;
     String guestEmail;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(8) default 'VI'")
+    @Builder.Default
+    BookingEmailLocale emailLocale = BookingEmailLocale.VI;
 
     boolean refundable;
 

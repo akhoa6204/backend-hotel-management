@@ -2,6 +2,7 @@ package com.hotelmanagement.backend.dto.internal;
 
 import com.hotelmanagement.backend.entity.Room;
 import com.hotelmanagement.backend.entity.User;
+import com.hotelmanagement.backend.enums.BookingEmailLocale;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -25,4 +26,5 @@ public class BookingCreationData {
     String guestName;
     String guestPhone;
     String guestEmail;
+    BookingEmailLocale emailLocale;
 }
