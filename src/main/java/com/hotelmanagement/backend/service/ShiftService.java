@@ -9,6 +9,8 @@ import com.hotelmanagement.backend.entity.StaffShiftAssignment;
 import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.enums.StaffPosition;
 import com.hotelmanagement.backend.enums.UserRole;
+import com.hotelmanagement.backend.enums.ErrorCode;
+import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.mapper.ShiftMapper;
 import com.hotelmanagement.backend.repository.ShiftRepository;
 import com.hotelmanagement.backend.repository.StaffShiftAssignmentRepository;
@@ -19,10 +21,16 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,44 +38,70 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ShiftService {
+    private static final int MAX_SCHEDULE_PAGE_SIZE = 100;
+    private static final Set<String> SCHEDULE_SORT_FIELDS = Set.of("name", "email", "position");
+
     ShiftRepository shiftRepository;
     UserRepository userRepository;
     StaffShiftAssignmentRepository staffShiftAssignmentRepository;
     UserService userService;
     ShiftMapper shiftMapper;
+    StaffShiftAssignmentValidator assignmentValidator;
     public List<Shift> findAllDefinition() {
         return shiftRepository.findAll();
     }
 
-    public List<StaffShiftResponse> getSchedule(
+    @Transactional(readOnly = true)
+    public Page<StaffShiftResponse> getSchedule(
+            int page,
+            int limit,
             String q,
             LocalDate startDate,
             LocalDate endDate,
-            UserRole position
+            UserRole position,
+            String sort
     ) {
+        if (page < 0 || limit < 1 || limit > MAX_SCHEDULE_PAGE_SIZE || startDate.isAfter(endDate)) {
+            throw new AppException(ErrorCode.INVALID_FORMAT);
+        }
+
         List<String> roleNames = position == null
                 ? List.of(
                         UserRole.ADMIN.name(),
+                        UserRole.MANAGER.name(),
                         UserRole.RECEPTIONIST.name(),
                         UserRole.HOUSEKEEPING.name()
                 )
                 : List.of(position.name());
+        PageRequest pageRequest = PageRequest.of(page, limit, parseScheduleSort(sort));
+        Page<User> staffPage = position == UserRole.USER
+                ? Page.empty(pageRequest)
+                : userRepository.findScheduleEmployees(roleNames, q == null ? "" : q.trim(), pageRequest);
+        List<String> staffIds = staffPage.getContent().stream().map(User::getId).toList();
+        List<StaffShiftAssignment> assignments = staffIds.isEmpty()
+                ? List.of()
+                : staffShiftAssignmentRepository.findScheduleAssignments(staffIds, startDate, endDate);
+        List<StaffShiftResponse> rows = buildStaffShiftResponses(staffPage.getContent(), assignments);
 
-        List<User> staffs = userRepository.findByRole_NameInAndActiveTrue(roleNames);
+        return new PageImpl<>(rows, pageRequest, staffPage.getTotalElements());
+    }
 
-        if (q != null && !q.isBlank()) {
-            String keyword = q.trim().toLowerCase();
-
-            staffs = staffs.stream()
-                    .filter(user -> user.getFullName() != null
-                            && user.getFullName().toLowerCase().contains(keyword))
-                    .toList();
+    private Sort parseScheduleSort(String sort) {
+        String[] parts = sort == null ? new String[0] : sort.split(",", -1);
+        String requestedField = parts.length > 0 && !parts[0].isBlank() ? parts[0].trim() : "name";
+        String requestedDirection = parts.length > 1 && !parts[1].isBlank() ? parts[1].trim() : "asc";
+        if (!SCHEDULE_SORT_FIELDS.contains(requestedField)
+                || !(requestedDirection.equalsIgnoreCase("asc") || requestedDirection.equalsIgnoreCase("desc"))) {
+            throw new AppException(ErrorCode.INVALID_FORMAT);
         }
 
-        List<StaffShiftAssignment> assignments =
-                staffShiftAssignmentRepository.findByWorkDateBetween(startDate, endDate);
-
-        return buildStaffShiftResponses(staffs, assignments);
+        String entityField = switch (requestedField) {
+            case "name" -> "fullName";
+            case "position" -> "role.name";
+            default -> requestedField;
+        };
+        return Sort.by(Sort.Direction.fromString(requestedDirection), entityField)
+                .and(Sort.by(Sort.Direction.ASC, "id"));
     }
 
     public List<StaffShiftResponse> getMySchedule(
@@ -131,22 +165,38 @@ public class ShiftService {
                 .toList();
     }
 
+    @Transactional
     public void createStaffShift(StaffShiftCreationRequest request) {
         User staff = userRepository.findById(request.getStaffId())
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         Shift shift = shiftRepository.findById(request.getShiftId())
-                .orElseThrow(() -> new RuntimeException("Shift not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.SHIFT_NOT_FOUND));
+
+        List<StaffShiftAssignment> existingAssignments =
+                staffShiftAssignmentRepository.findByStaffIdAndWorkDate(staff.getId(), request.getWorkDate());
+        var validationErrors = assignmentValidator.validate(
+                staff, shift, request.getWorkDate(), existingAssignments
+        );
+        if (validationErrors.contains(com.hotelmanagement.backend.enums.StaffShiftValidationCode.EMPLOYEE_INELIGIBLE)) {
+            throw new AppException(ErrorCode.SHIFT_STAFF_INELIGIBLE);
+        }
+        if (!validationErrors.isEmpty()) {
+            throw new AppException(ErrorCode.SHIFT_ASSIGNMENT_CONFLICT);
+        }
 
         StaffShiftAssignment assignment = StaffShiftAssignment.builder()
                 .staff(staff)
                 .shift(shift)
                 .workDate(request.getWorkDate())
-                .position(StaffPosition.valueOf(staff.getRole().getName()))
+                .position(StaffPosition.fromUserRole(
+                        UserRole.valueOf(staff.getRole().getName())
+                ))
                 .build();
 
         staffShiftAssignmentRepository.save(assignment);
     }
+
     public void deleteStaffShift(Integer id) {
         StaffShiftAssignment assignment = staffShiftAssignmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Staff shift assignment not found"));

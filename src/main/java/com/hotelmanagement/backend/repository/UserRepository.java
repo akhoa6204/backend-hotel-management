@@ -18,6 +18,9 @@ public interface UserRepository extends JpaRepository<User,String> {
     boolean existsByEmail(String email);
     Optional<User> findByEmail(String email);
 
+    @Query("SELECT u FROM User u WHERE LOWER(u.email) IN :emails")
+    List<User> findByNormalizedEmailIn(@Param("emails") List<String> emails);
+
     @Query("""
             SELECT u
             FROM User u
@@ -48,6 +51,23 @@ public interface UserRepository extends JpaRepository<User,String> {
 
     List<User> findByRole_NameInAndActiveTrue(
             List<String> roles
+    );
+
+    @Query("""
+            SELECT u
+            FROM User u
+            WHERE u.active = true
+              AND u.role.name IN :roles
+              AND (
+                    :q = ''
+                    OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :q, '%'))
+                    OR LOWER(u.email) LIKE LOWER(CONCAT('%', :q, '%'))
+              )
+            """)
+    Page<User> findScheduleEmployees(
+            @Param("roles") List<String> roles,
+            @Param("q") String q,
+            Pageable pageable
     );
 
     @Query("""

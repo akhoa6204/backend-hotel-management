@@ -1,5 +1,6 @@
 package com.hotelmanagement.backend.dto.request;
 
+import com.hotelmanagement.backend.enums.BookingEmailLocale;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -12,4 +13,7 @@ import lombok.experimental.FieldDefaults;
 public class PasswordResetRequest {
     @NotBlank(message = "REQUIRED_FIELD")
     String email;
+
+    @Builder.Default
+    BookingEmailLocale locale = BookingEmailLocale.VI;
 }

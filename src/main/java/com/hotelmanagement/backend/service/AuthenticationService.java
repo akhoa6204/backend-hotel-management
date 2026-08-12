@@ -9,6 +9,7 @@ import com.hotelmanagement.backend.entity.Role;
 import com.hotelmanagement.backend.entity.User;
 import com.hotelmanagement.backend.exception.AppException;
 import com.hotelmanagement.backend.enums.ErrorCode;
+import com.hotelmanagement.backend.enums.BookingEmailLocale;
 import com.hotelmanagement.backend.mapper.UserMapper;
 import com.hotelmanagement.backend.repository.InvalidatedTokenRepository;
 import com.hotelmanagement.backend.repository.PasswordResetTokenRepository;
@@ -222,12 +223,14 @@ public class AuthenticationService {
         String resetUrl =
                 FRONTEND_ORIGIN + "/reset-password?token=" + token;
 
-        String html =
-                PasswordResetEmailTemplate.build(resetUrl);
+        BookingEmailLocale locale = request.getLocale() == null
+                ? BookingEmailLocale.VI
+                : request.getLocale();
+        String html = PasswordResetEmailTemplate.build(resetUrl, locale);
 
         emailService.sendHtmlEmail(
                 user.getEmail(),
-                "Đặt lại mật khẩu tài khoản Skyline Hotel",
+                PasswordResetEmailTemplate.subject(locale),
                 html
         );
     }

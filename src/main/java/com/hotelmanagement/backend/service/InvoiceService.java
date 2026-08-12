@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -107,6 +108,7 @@ public class InvoiceService {
         invoiceRepository.save(invoice);
     }
 
+    @Transactional
     public Invoice addInvoiceItem(
             String id,
             InvoiceAddItemRequest request
@@ -167,6 +169,7 @@ public class InvoiceService {
         return invoiceRepository.save(invoice);
     }
 
+    @Transactional
     public Invoice updateInvoiceItem(Long id, InvoiceItemUpdateRequest request) {
 
         InvoiceItem item = invoiceItemService.update(id, request);
@@ -176,6 +179,7 @@ public class InvoiceService {
         return getById(item.getInvoice().getId());
     }
 
+    @Transactional
     public Invoice removeInvoiceItem(Long itemId) {
 
         InvoiceItem item = invoiceItemService.getById(itemId);
