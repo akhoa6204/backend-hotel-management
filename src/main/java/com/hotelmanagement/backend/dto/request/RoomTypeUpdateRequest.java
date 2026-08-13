@@ -32,4 +32,5 @@ public class RoomTypeUpdateRequest {
 
     Set<String> amenities;
     Set<String> roomTypeImages;
+    List<RoomTypeImageRequest> roomTypeImageMetadata;
 }

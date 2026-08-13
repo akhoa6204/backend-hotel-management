@@ -15,6 +15,7 @@ import lombok.experimental.FieldDefaults;
 public class RoomTypeImageResponse {
     Long id;
     String url;
+    String publicId;
     String alt;
     boolean thumbnail;
 }

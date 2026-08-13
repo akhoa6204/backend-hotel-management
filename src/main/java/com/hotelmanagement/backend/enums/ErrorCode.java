@@ -74,6 +74,10 @@ public enum ErrorCode {
     SHIFT_STAFF_INELIGIBLE(2303, "Employee is not eligible for staff scheduling", HttpStatus.BAD_REQUEST),
     SHIFT_IMPORT_INVALID(2304, "Staff schedule import contains invalid rows", HttpStatus.BAD_REQUEST),
 
+    UPLOAD_INVALID_CONTEXT(2401, "Upload context is invalid", HttpStatus.BAD_REQUEST),
+    UPLOAD_CONFIGURATION_INVALID(2402, "Upload configuration is invalid", HttpStatus.INTERNAL_SERVER_ERROR),
+    UPLOAD_INVALID_FILE(2403, "Only JPG, PNG, or WebP images up to 5 MB are allowed", HttpStatus.BAD_REQUEST),
+
     UNAUTHENTICATED(2001, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(2002, "You do not have permission", HttpStatus.FORBIDDEN),
     PERMISSION_NOT_FOUND(2003, "Permission not found", HttpStatus.NOT_FOUND),

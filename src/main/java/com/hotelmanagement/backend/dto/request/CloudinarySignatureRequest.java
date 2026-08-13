@@ -2,32 +2,25 @@ package com.hotelmanagement.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Set;
-
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RoomTypeCreationRequest {
+public class CloudinarySignatureRequest {
     @NotBlank(message = "REQUIRED_FIELD")
-    String name;
+    String context;
+
     @NotBlank(message = "REQUIRED_FIELD")
-    String description;
+    String fileName;
+
+    @NotBlank(message = "REQUIRED_FIELD")
+    String contentType;
 
     @NotNull(message = "REQUIRED_FIELD")
-    int capacity;
-
-    @NotNull(message = "REQUIRED_FIELD")
-    BigDecimal basePrice;
-
-    Set<String> amenities;
-    Set<String> roomTypeImages;
-    List<RoomTypeImageRequest> roomTypeImageMetadata;
+    Long size;
 }
