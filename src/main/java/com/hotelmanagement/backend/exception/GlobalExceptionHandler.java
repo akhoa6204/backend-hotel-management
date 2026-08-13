@@ -101,6 +101,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiResponse> handleException(Exception exception) {
+        log.error("Unhandled exception", exception);
+
         ApiResponse res = new ApiResponse();
 
         res.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());

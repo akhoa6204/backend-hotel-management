@@ -22,6 +22,7 @@ public class RoomTypeImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     String url;
+    String publicId;
     String alt;
     boolean thumbnail;
 
