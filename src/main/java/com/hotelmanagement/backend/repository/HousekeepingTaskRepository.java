@@ -6,6 +6,7 @@ import com.hotelmanagement.backend.enums.HousekeepingTaskStatus;
 import com.hotelmanagement.backend.enums.HousekeepingTaskType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +17,16 @@ import java.util.Optional;
 @Repository
 public interface HousekeepingTaskRepository extends JpaRepository<HousekeepingTask,Long> {
 
+    @EntityGraph(attributePaths = {
+            "room",
+            "staff"
+    })
+    Optional<HousekeepingTask> findDetailById(Long id);
 
+    @EntityGraph(attributePaths = {
+            "room",
+            "staff"
+    })
     @Query("""
             SELECT h
             FROM HousekeepingTask h
@@ -60,6 +70,11 @@ public interface HousekeepingTaskRepository extends JpaRepository<HousekeepingTa
             String staffId,
             HousekeepingTaskStatus status
     );
+
+    @EntityGraph(attributePaths = {
+            "room",
+            "staff"
+    })
     @Query("""
             SELECT h
             FROM HousekeepingTask h

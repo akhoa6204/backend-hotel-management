@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.hotelmanagement.backend.entity.StaffShiftAssignment;
 import com.hotelmanagement.backend.repository.StaffShiftAssignmentRepository;
@@ -46,6 +47,7 @@ public class HousekeepingTaskService {
 
     SimpMessagingTemplate messagingTemplate;
 
+    @Transactional
     public HousekeepingTask createTask(HousekeepingTaskCreationRequest request) {
 
         HousekeepingTask housekeepingTask =
@@ -82,7 +84,9 @@ public class HousekeepingTaskService {
             );
         }
 
-        return housekeepingTaskRepository.save(housekeepingTask);
+        HousekeepingTask savedTask = housekeepingTaskRepository.save(housekeepingTask);
+        return housekeepingTaskRepository.findDetailById(savedTask.getId())
+                .orElse(savedTask);
     }
 
     private User findAvailableHousekeepingStaff() {
@@ -109,7 +113,7 @@ public class HousekeepingTaskService {
     }
 
     public HousekeepingTask getByTaskId(Long id){
-        return housekeepingTaskRepository.findById(id)
+        return housekeepingTaskRepository.findDetailById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.HOUSEKEEPING_TASK_NOT_FOUND));
     }
 
